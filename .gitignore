@@ -39,3 +39,21 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# heap dumps and profiling
+*.heapsnapshot
+*.cpuprofile
+
+# development artifacts
+/test-results/
+/screenshots/
+/data/sminventory.db*
+prove.js
+shot.sh
+server-status.js
+ensure-server.js
+test-visual.js
+test-visual-simple.js
+scrape-t3.js
+scrape-t3-chat.js
+t3chat.txt

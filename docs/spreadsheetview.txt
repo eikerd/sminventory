@@ -1,0 +1,31 @@
+The "Smart" Spreadsheet Layout
+The view is shifted from a grid to a high-density table with a focus on visual health indicators.
+1. Header & Filter Bar
+Search: Stays pinned at the top left.
+Quick Filters: Add pill-shaped toggles next to the search: [All] [Missing Models] [Not Scanned] [Ready to Run].
+Global Actions: "Scan All" and "Download Missing" buttons moved to the top right.
+2. The Smart Columns
+Column	Type	Why it’s "Smart"
+Selection	Checkbox	Allows for bulk scanning or bulk downloading.
+Workflow Name	Text (Primary)	Includes a small icon indicating the workflow type (e.g., Image, Video, Upscale).
+Health Status	Icon + Tooltip	A color-coded dot: <br>🟢 Ready: All dependencies present.<br>🟡 Incomplete: Models missing but scanned.<br>⚪ Unknown: Not yet scanned.
+Dependency Progress	Progress Bar	Instead of "0/3", a slim horizontal bar that fills as models are found. Tooltip shows the specific missing model names.
+Missing	Badge	A high-contrast amber badge (e.g., ! 8) that only appears if models are missing, drawing the eye to problems.
+Total Size	Data Value	Right-aligned, auto-formatting (B, KB, MB, GB). Grayed out if 0 B.
+Last Scanned	Timestamp	"2 hours ago" or "Never." Helps track if data is stale.
+Actions	Icon Group	Clean icons for View (Eye), Scan (Refresh), and Download (Cloud). These only reveal full color on row hover to reduce visual noise.
+3. Visual Concept (Mockup Description)
+The Aesthetic:
+Background: Deep matte black (#0d0d0d).
+Rows: Separated by very thin, dark grey borders. Row highlights on hover with a subtle purple glow (matching the "Sminventory" brand).
+Typography: Monospace font for "Size" and "Missing" counts to ensure perfect vertical alignment.
+Example Rows:
+[ ]	Workflow Name	Health	Dependencies	Missing	Size	Actions
+[x]	wan22 image 2 video nsfw	⚪	[░░░░░░░░░░] 0/0	—	--	👁️ 🔄 📥
+[ ]	The Cook Multiscene...	🟡	[▓▓░░░░░░░░] 2/8	! 6	1.2 GB	👁️ 🔄 📥
+[ ]	classifier wd14	🟢	[▓▓▓▓▓▓▓▓▓▓] 4/4	—	450 MB	👁️ 🔄 📥
+4. Smart Functional Improvements
+Conditional Formatting: If a workflow has "Missing Models," the text for that row turns slightly more amber. If "Ready to Run," the name turns bright white.
+Inline Scan: Clicking the "Scan" icon triggers a small loading spinner inside the cell, updating the "Health" and "Dependencies" columns in real-time without refreshing the page.
+Expandable Rows: Clicking the workflow name drops down a small sub-panel listing every required model and its individual status (Found / Missing / Downloading).
+Sticky Header: The column headers stay at the top as you scroll through your 24+ workflows.
