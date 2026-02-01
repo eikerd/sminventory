@@ -325,9 +325,5 @@ function ModelsContent() {
 }
 
 export default function ModelsPage() {
-  return (
-    <Suspense fallback={<div className="flex h-screen"><div className="flex-1" /></div>}>
-      <ModelsContent />
-    </Suspense>
-  );
+  return <ModelsContent />;
 }

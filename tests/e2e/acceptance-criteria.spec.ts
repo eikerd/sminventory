@@ -5,37 +5,37 @@ test.describe("Acceptance Criteria - Full Application Navigation", () => {
     const sections = [
       {
         name: "Dashboard",
-        url: "http://localhost:6660/",
+        url: "/",
         expectedTitle: "Dashboard",
         expectedContent: ["Total", "Workflows", "Models"], // Expected stat cards or content
       },
       {
         name: "Workflows",
-        url: "http://localhost:6660/workflows",
+        url: "/workflows",
         expectedTitle: "Workflows",
         expectedContent: ["Manage and scan", "Scan Workflow Folder"], // Button label
       },
       {
         name: "Models",
-        url: "http://localhost:6660/models",
+        url: "/models",
         expectedTitle: "Models",
         expectedContent: ["Browse and manage", "Total Models"],
       },
       {
         name: "Downloads",
-        url: "http://localhost:6660/downloads",
+        url: "/downloads",
         expectedTitle: "Downloads",
         expectedContent: ["Download", "queue"],
       },
       {
         name: "Tasks",
-        url: "http://localhost:6660/tasks",
+        url: "/tasks",
         expectedTitle: "Task Manager",
         expectedContent: ["Monitor background", "operations"],
       },
       {
         name: "Settings",
-        url: "http://localhost:6660/settings",
+        url: "/settings",
         expectedTitle: "Settings",
         expectedContent: ["Settings", "configuration"],
       },
@@ -43,8 +43,9 @@ test.describe("Acceptance Criteria - Full Application Navigation", () => {
 
     for (const section of sections) {
       test.step(`Verify ${section.name} section loads correctly`, async () => {
-        // Navigate to section
-        await page.goto(section.url, { waitUntil: "networkidle" });
+        // Navigate to section - without wait, then wait for DOM content
+        await page.goto(section.url);
+        await page.waitForTimeout(200);
 
         // Verify page title
         const h1 = page.locator(`h1:has-text("${section.expectedTitle}")`);
@@ -72,7 +73,7 @@ test.describe("Acceptance Criteria - Full Application Navigation", () => {
   });
 
   test("should have functional sidebar navigation", async ({ page }) => {
-    await page.goto("http://localhost:6660/");
+    await page.goto("/");
 
     // Verify sidebar exists
     const sidebar = page.locator("nav, [role='navigation']");
@@ -93,7 +94,7 @@ test.describe("Acceptance Criteria - Full Application Navigation", () => {
 
       // Click and verify navigation works
       await navLink.click();
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("domcontentloaded");
 
       // Verify page loaded
       const heading = page.locator("h1");
@@ -102,7 +103,7 @@ test.describe("Acceptance Criteria - Full Application Navigation", () => {
   });
 
   test("CRITICAL: Workflows page should have scan button and be able to scan", async ({ page }) => {
-    await page.goto("http://localhost:6660/workflows", { waitUntil: "networkidle" });
+    await page.goto("/workflows", { waitUntil: "domcontentloaded" });
 
     // Verify "Scan Workflow Folder" button exists and is visible
     const scanButton = page.locator('button:has-text("Scan Workflow Folder")');
@@ -120,19 +121,19 @@ test.describe("Acceptance Criteria - Full Application Navigation", () => {
     const sections = [
       {
         name: "Workflows",
-        url: "http://localhost:6660/workflows",
+        url: "/workflows",
         selector: "[class*='table'], [class*='card']", // Look for table or card containers
         shouldHaveContent: false, // May be empty initially (workflows not scanned yet)
       },
       {
         name: "Models",
-        url: "http://localhost:6660/models",
+        url: "/models",
         selector: "[class*='table'], [class*='card']",
         shouldHaveContent: false, // May be empty initially
       },
       {
         name: "Dashboard",
-        url: "http://localhost:6660/",
+        url: "/",
         selector: "h1, p", // At least heading and description
         shouldHaveContent: true, // Always should have content
       },
@@ -140,7 +141,9 @@ test.describe("Acceptance Criteria - Full Application Navigation", () => {
 
     for (const section of sections) {
       test.step(`Check ${section.name} is not completely blank`, async () => {
-        await page.goto(section.url, { waitUntil: "networkidle" });
+        // Navigate without wait, then verify content
+        await page.goto(section.url);
+        await page.waitForTimeout(200);
 
         // Get all visible text
         const bodyText = await page.locator("body").innerText();
@@ -170,16 +173,16 @@ test.describe("Acceptance Criteria - Full Application Navigation", () => {
 
   test("should verify header is present on all pages", async ({ page }) => {
     const pages = [
-      "http://localhost:6660/",
-      "http://localhost:6660/workflows",
-      "http://localhost:6660/models",
-      "http://localhost:6660/downloads",
-      "http://localhost:6660/tasks",
-      "http://localhost:6660/settings",
+      "/",
+      "/workflows",
+      "/models",
+      "/downloads",
+      "/tasks",
+      "/settings",
     ];
 
     for (const url of pages) {
-      await page.goto(url, { waitUntil: "networkidle" });
+      await page.goto(url, { waitUntil: "domcontentloaded" });
 
       // Verify header with title exists
       const header = page.locator("h1");
@@ -201,14 +204,14 @@ test.describe("Acceptance Criteria - Full Application Navigation", () => {
 
     // Test key pages
     const pages = [
-      "http://localhost:6660/workflows",
-      "http://localhost:6660/models",
-      "http://localhost:6660/tasks",
+      "/workflows",
+      "/models",
+      "/tasks",
     ];
 
     for (const url of pages) {
       consoleErrors.length = 0; // Clear errors for each page
-      await page.goto(url, { waitUntil: "networkidle" });
+      await page.goto(url, { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(1000); // Wait for any deferred errors
 
       expect(

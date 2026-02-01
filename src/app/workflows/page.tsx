@@ -896,9 +896,5 @@ function WorkflowsContent() {
 }
 
 export default function WorkflowsPage() {
-  return (
-    <Suspense fallback={<div className="flex h-screen"><div className="flex-1" /></div>}>
-      <WorkflowsContent />
-    </Suspense>
-  );
+  return <WorkflowsContent />;
 }

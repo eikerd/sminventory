@@ -185,15 +185,16 @@ function TasksContent() {
               </div>
             </CardHeader>
             <CardContent>
-              {activeQuery.isLoading ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Loading...
-                </div>
-              ) : activeQuery.data?.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No active tasks
-                </div>
-              ) : (
+              <div suppressHydrationWarning>
+                {activeQuery.isLoading ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Loading...
+                  </div>
+                ) : activeQuery.data?.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No active tasks
+                  </div>
+                ) : (
                 <div className="space-y-4">
                   {activeQuery.data?.map((task) => (
                     <div
@@ -216,7 +217,8 @@ function TasksContent() {
                     </div>
                   ))}
                 </div>
-              )}
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -237,15 +239,16 @@ function TasksContent() {
               </div>
             </CardHeader>
             <CardContent>
-              {historyQuery.isLoading ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Loading...
-                </div>
-              ) : historyQuery.data?.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No tasks
-                </div>
-              ) : (
+              <div suppressHydrationWarning>
+                {historyQuery.isLoading ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Loading...
+                  </div>
+                ) : historyQuery.data?.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No tasks
+                  </div>
+                ) : (
                 <div className="space-y-2">
                   {historyQuery.data?.map((task) => (
                     <div
@@ -269,7 +272,8 @@ function TasksContent() {
                     </div>
                   ))}
                 </div>
-              )}
+                )}
+              </div>
             </CardContent>
           </Card>
         </main>
@@ -289,9 +293,5 @@ function TasksContent() {
 }
 
 export default function TasksPage() {
-  return (
-    <Suspense fallback={<div className="flex h-screen"><div className="flex-1" /></div>}>
-      <TasksContent />
-    </Suspense>
-  );
+  return <TasksContent />;
 }

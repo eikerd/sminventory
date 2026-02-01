@@ -10,6 +10,7 @@ import {
   Download,
   Settings,
   Package,
+  Clock,
 } from "lucide-react";
 
 const navigation = [
@@ -17,6 +18,7 @@ const navigation = [
   { name: "Workflows", href: "/workflows", icon: Layers },
   { name: "Models", href: "/models", icon: HardDrive },
   { name: "Downloads", href: "/downloads", icon: Download },
+  { name: "Tasks", href: "/tasks", icon: Clock },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
