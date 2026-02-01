@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, Suspense } from "react";
+import { useState, useMemo, useEffect, useRef, Suspense, Fragment } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -721,9 +721,8 @@ function WorkflowsContent() {
                                    workflow.status === WORKFLOW_STATUS.SCANNED_READY_CLOUD;
 
                     return (
-                      <>
+                      <Fragment key={workflow.id}>
                         <TableRow
-                          key={workflow.id}
                           className={cn(
                             "border-gray-800/50 transition-colors",
                             "hover:bg-purple-900/10 hover:shadow-[0_0_15px_rgba(168,85,247,0.1)]",
@@ -881,7 +880,7 @@ function WorkflowsContent() {
                             </TableCell>
                           </TableRow>
                         )}
-                      </>
+                      </Fragment>
                     );
                   })}
                   </TableBody>
