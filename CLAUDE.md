@@ -8,6 +8,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Tech Stack:** Next.js 15+ (App Router), TypeScript, tRPC, Drizzle ORM, SQLite (better-sqlite3), React Query, Tailwind CSS 4, Radix UI, Playwright (E2E testing)
 
+## ⚠️ CRITICAL RULES FOR ALL AGENTS
+
+### File Commit Rules
+**NEVER commit any generated markdown (.md) files without explicit user permission.**
+
+This includes:
+- `HANDOFF.md` - Handoff documentation (keep locally only)
+- `ROADMAP.md`, `TODO.md`, etc. - Planning documents (ask user first)
+- Any other `.md` files generated during the session
+
+Only commit `.md` files that:
+1. Are already in the repository (pre-existing)
+2. User explicitly requested you to create
+3. Are part of the project's documentation (like existing READMEs)
+
+**When in doubt, ask the user before adding any .md file to a commit.**
+
 ## Development Commands
 
 ### Core Commands

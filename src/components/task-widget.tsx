@@ -31,7 +31,7 @@ export function TaskWidget() {
     }
   );
 
-  const tasks = tasksQuery.data?.tasks || [];
+  const tasks = tasksQuery.data || [];
   const activeCount = tasks.length;
   const totalProgress = tasks.length > 0
     ? Math.round(tasks.reduce((sum, t) => sum + (t.progress || 0), 0) / tasks.length)
