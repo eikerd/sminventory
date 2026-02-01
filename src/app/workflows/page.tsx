@@ -321,6 +321,7 @@ function WorkflowsContent() {
           description="Manage and scan ComfyUI workflows"
           onScan={() => scanWorkflows.mutate()}
           scanning={scanWorkflows.isPending}
+          scanLabel="Scan Workflow Folder"
         />
 
         <main className="flex-1 overflow-hidden flex flex-col">

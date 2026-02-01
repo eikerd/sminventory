@@ -1,0 +1,50 @@
+[02:22:28.049] Server  ERROR   TurbopackInternalError: Failed to restore task data (corrupted database or bug): Data for parse (TaskId 175559))
+
+Debug info:
+- Failed to restore task data (corrupted database or bug): Data for parse (TaskId 175559))
+  
+  Caused by:
+      0: Looking up data for TaskId 175559 from database failed
+      1: Unable to open static sorted file referenced from 00000466.meta
+      2: Unable to open static sorted file 00000458.sst
+      3: No such file or directory (os error 2)
+[02:22:28.129] Server  ERROR   ⨯ Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /mnt/e/Sminventory/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /mnt/e/Sminventory/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /mnt/e/Sminventory/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /mnt/e/Sminventory/node_modules/next/dist/server/lib/router-server.js
+- /mnt/e/Sminventory/node_modules/next/dist/server/lib/start-server.js
+[02:22:28.163] Server  ERROR   Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /mnt/e/Sminventory/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /mnt/e/Sminventory/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /mnt/e/Sminventory/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /mnt/e/Sminventory/node_modules/next/dist/server/lib/router-server.js
+- /mnt/e/Sminventory/node_modules/next/dist/server/lib/start-server.js
+[02:22:28.281] Browser ERROR   [ERROR] Error in Workflow Scan {"cause":{},"name":"TRPCClientError"} undefined
+[02:22:28.281] Browser ERROR   [ERROR] Workflow scan failed {"cause":{},"name":"TRPCClientError"} undefined
+[02:24:34.272] Server  ERROR   TurbopackInternalError: Failed to restore task data (corrupted database or bug): Data for ClientReferencesGraph::get_client_references_for_endpoint (TaskId 148029))
+
+Debug info:
+- Failed to restore task data (corrupted database or bug): Data for ClientReferencesGraph::get_client_references_for_endpoint (TaskId 148029))
+  
+  Caused by:
+      0: Looking up data for TaskId 148029 from database failed
+      1: Unable to open static sorted file referenced from 00000466.meta
+      2: Unable to open static sorted file 00000460.sst
+      3: No such file or directory (os error 2)
+[02:24:34.307] Server  ERROR   ⨯ Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /mnt/e/Sminventory/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /mnt/e/Sminventory/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /mnt/e/Sminventory/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /mnt/e/Sminventory/node_modules/next/dist/server/lib/router-server.js
+- /mnt/e/Sminventory/node_modules/next/dist/server/lib/start-server.js
+[02:24:34.338] Server  ERROR   Error: Cannot find module 'next/dist/pages/_error'
+Require stack:
+- /mnt/e/Sminventory/node_modules/next/dist/server/dev/on-demand-entry-handler.js
+- /mnt/e/Sminventory/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+- /mnt/e/Sminventory/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /mnt/e/Sminventory/node_modules/next/dist/server/lib/router-server.js
+- /mnt/e/Sminventory/node_modules/next/dist/server/lib/start-server.js

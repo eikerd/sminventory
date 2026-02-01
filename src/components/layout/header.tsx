@@ -8,9 +8,10 @@ interface HeaderProps {
   description?: string;
   onScan?: () => void;
   scanning?: boolean;
+  scanLabel?: string;
 }
 
-export function Header({ title, description, onScan, scanning }: HeaderProps) {
+export function Header({ title, description, onScan, scanning, scanLabel = "Scan All" }: HeaderProps) {
   return (
     <div className="flex items-center justify-between border-b bg-card px-6 py-4">
       <div>
@@ -30,7 +31,7 @@ export function Header({ title, description, onScan, scanning }: HeaderProps) {
           ) : (
             <>
               <ScanSearch className="mr-2 h-4 w-4" />
-              Scan Selected
+              {scanLabel}
             </>
           )}
         </Button>
