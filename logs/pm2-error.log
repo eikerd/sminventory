@@ -1,0 +1,296 @@
+2026-01-31 17:59:23 -06:00: ⨯ Failed to start server
+2026-01-31 17:59:23 -06:00: Error: listen EADDRINUSE: address already in use :::6660
+2026-01-31 17:59:23 -06:00:     at <unknown> (Error: listen EADDRINUSE: address already in use :::6660)
+2026-01-31 17:59:23 -06:00:     at new Promise (<anonymous>) {
+2026-01-31 17:59:23 -06:00:   code: 'EADDRINUSE',
+2026-01-31 17:59:23 -06:00:   errno: -98,
+2026-01-31 17:59:23 -06:00:   syscall: 'listen',
+2026-01-31 17:59:23 -06:00:   address: '::',
+2026-01-31 17:59:23 -06:00:   port: 6660
+2026-01-31 17:59:23 -06:00: }
+2026-01-31 18:00:17 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:00:17 -06:00:     at WorkflowsContent (src/app/workflows/page.tsx:176:46)
+2026-01-31 18:00:17 -06:00:   174 |   };
+2026-01-31 18:00:17 -06:00:   175 |
+2026-01-31 18:00:17 -06:00: > 176 |   const workflowsQuery = trpc.workflows.list.useQuery({
+2026-01-31 18:00:17 -06:00:       |                                              ^
+2026-01-31 18:00:17 -06:00:   177 |     search: searchQuery || undefined,
+2026-01-31 18:00:17 -06:00:   178 |     status: activeFilter === "missing" ? WORKFLOW_STATUS.SCANNED_MISSING :
+2026-01-31 18:00:17 -06:00:   179 |             activeFilter === "not-scanned" ? WORKFLOW_STATUS.NEW : {
+2026-01-31 18:00:17 -06:00:   digest: '2483906779'
+2026-01-31 18:00:17 -06:00: }
+2026-01-31 18:00:17 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:00:17 -06:00:     at WorkflowsContent (src/app/workflows/page.tsx:176:46)
+2026-01-31 18:00:17 -06:00:   174 |   };
+2026-01-31 18:00:17 -06:00:   175 |
+2026-01-31 18:00:17 -06:00: > 176 |   const workflowsQuery = trpc.workflows.list.useQuery({
+2026-01-31 18:00:17 -06:00:       |                                              ^
+2026-01-31 18:00:17 -06:00:   177 |     search: searchQuery || undefined,
+2026-01-31 18:00:17 -06:00:   178 |     status: activeFilter === "missing" ? WORKFLOW_STATUS.SCANNED_MISSING :
+2026-01-31 18:00:17 -06:00:   179 |             activeFilter === "not-scanned" ? WORKFLOW_STATUS.NEW : {
+2026-01-31 18:00:17 -06:00:   digest: '2483906779'
+2026-01-31 18:00:17 -06:00: }
+2026-01-31 18:00:20 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:00:20 -06:00:     at WorkflowsContent (src/app/workflows/page.tsx:176:46)
+2026-01-31 18:00:20 -06:00:   174 |   };
+2026-01-31 18:00:20 -06:00:   175 |
+2026-01-31 18:00:20 -06:00: > 176 |   const workflowsQuery = trpc.workflows.list.useQuery({
+2026-01-31 18:00:20 -06:00:       |                                              ^
+2026-01-31 18:00:20 -06:00:   177 |     search: searchQuery || undefined,
+2026-01-31 18:00:20 -06:00:   178 |     status: activeFilter === "missing" ? WORKFLOW_STATUS.SCANNED_MISSING :
+2026-01-31 18:00:20 -06:00:   179 |             activeFilter === "not-scanned" ? WORKFLOW_STATUS.NEW : {
+2026-01-31 18:00:20 -06:00:   digest: '2483906779'
+2026-01-31 18:00:20 -06:00: }
+2026-01-31 18:00:24 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:00:24 -06:00:     at ModelsContent (src/app/models/page.tsx:59:40)
+2026-01-31 18:00:24 -06:00:   57 |   const { viewMode, setViewMode } = useViewMode();
+2026-01-31 18:00:24 -06:00:   58 |
+2026-01-31 18:00:24 -06:00: > 59 |   const modelsQuery = trpc.models.list.useQuery({
+2026-01-31 18:00:24 -06:00:      |                                        ^
+2026-01-31 18:00:24 -06:00:   60 |     search: searchQuery || undefined,
+2026-01-31 18:00:24 -06:00:   61 |     location: locationFilter !== "all" ? (locationFilter as "local" | "warehouse") : undefined,
+2026-01-31 18:00:24 -06:00:   62 |     type: typeFilter !== "all" ? typeFilter : undefined, {
+2026-01-31 18:00:24 -06:00:   digest: '3221396716'
+2026-01-31 18:00:24 -06:00: }
+2026-01-31 18:00:32 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:00:32 -06:00:     at TasksContent (src/app/tasks/page.tsx:20:39)
+2026-01-31 18:00:32 -06:00:   18 |
+2026-01-31 18:00:32 -06:00:   19 |   // Get stats
+2026-01-31 18:00:32 -06:00: > 20 |   const statsQuery = trpc.tasks.stats.useQuery(undefined, {
+2026-01-31 18:00:32 -06:00:      |                                       ^
+2026-01-31 18:00:32 -06:00:   21 |     refetchInterval: autoRefresh ? 2000 : false,
+2026-01-31 18:00:32 -06:00:   22 |   });
+2026-01-31 18:00:32 -06:00:   23 | {
+2026-01-31 18:00:32 -06:00:   digest: '3630203459'
+2026-01-31 18:00:32 -06:00: }
+2026-01-31 18:00:54 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:00:54 -06:00:     at WorkflowsContent (src/app/workflows/page.tsx:176:46)
+2026-01-31 18:00:54 -06:00:   174 |   };
+2026-01-31 18:00:54 -06:00:   175 |
+2026-01-31 18:00:54 -06:00: > 176 |   const workflowsQuery = trpc.workflows.list.useQuery({
+2026-01-31 18:00:54 -06:00:       |                                              ^
+2026-01-31 18:00:54 -06:00:   177 |     search: searchQuery || undefined,
+2026-01-31 18:00:54 -06:00:   178 |     status: activeFilter === "missing" ? WORKFLOW_STATUS.SCANNED_MISSING :
+2026-01-31 18:00:54 -06:00:   179 |             activeFilter === "not-scanned" ? WORKFLOW_STATUS.NEW : {
+2026-01-31 18:00:54 -06:00:   digest: '2483906779'
+2026-01-31 18:00:54 -06:00: }
+2026-01-31 18:00:57 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:00:57 -06:00:     at WorkflowsContent (src/app/workflows/page.tsx:176:46)
+2026-01-31 18:00:57 -06:00:   174 |   };
+2026-01-31 18:00:57 -06:00:   175 |
+2026-01-31 18:00:57 -06:00: > 176 |   const workflowsQuery = trpc.workflows.list.useQuery({
+2026-01-31 18:00:57 -06:00:       |                                              ^
+2026-01-31 18:00:57 -06:00:   177 |     search: searchQuery || undefined,
+2026-01-31 18:00:57 -06:00:   178 |     status: activeFilter === "missing" ? WORKFLOW_STATUS.SCANNED_MISSING :
+2026-01-31 18:00:57 -06:00:   179 |             activeFilter === "not-scanned" ? WORKFLOW_STATUS.NEW : {
+2026-01-31 18:00:57 -06:00:   digest: '2483906779'
+2026-01-31 18:00:57 -06:00: }
+2026-01-31 18:01:00 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:01:00 -06:00:     at ModelsContent (src/app/models/page.tsx:59:40)
+2026-01-31 18:01:00 -06:00:   57 |   const { viewMode, setViewMode } = useViewMode();
+2026-01-31 18:01:00 -06:00:   58 |
+2026-01-31 18:01:00 -06:00: > 59 |   const modelsQuery = trpc.models.list.useQuery({
+2026-01-31 18:01:00 -06:00:      |                                        ^
+2026-01-31 18:01:00 -06:00:   60 |     search: searchQuery || undefined,
+2026-01-31 18:01:00 -06:00:   61 |     location: locationFilter !== "all" ? (locationFilter as "local" | "warehouse") : undefined,
+2026-01-31 18:01:00 -06:00:   62 |     type: typeFilter !== "all" ? typeFilter : undefined, {
+2026-01-31 18:01:00 -06:00:   digest: '3221396716'
+2026-01-31 18:01:00 -06:00: }
+2026-01-31 18:01:06 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:01:06 -06:00:     at TasksContent (src/app/tasks/page.tsx:20:39)
+2026-01-31 18:01:06 -06:00:   18 |
+2026-01-31 18:01:06 -06:00:   19 |   // Get stats
+2026-01-31 18:01:06 -06:00: > 20 |   const statsQuery = trpc.tasks.stats.useQuery(undefined, {
+2026-01-31 18:01:06 -06:00:      |                                       ^
+2026-01-31 18:01:06 -06:00:   21 |     refetchInterval: autoRefresh ? 2000 : false,
+2026-01-31 18:01:06 -06:00:   22 |   });
+2026-01-31 18:01:06 -06:00:   23 | {
+2026-01-31 18:01:06 -06:00:   digest: '3630203459'
+2026-01-31 18:01:06 -06:00: }
+2026-01-31 18:01:24 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:01:24 -06:00:     at WorkflowsContent (src/app/workflows/page.tsx:176:46)
+2026-01-31 18:01:24 -06:00:   174 |   };
+2026-01-31 18:01:24 -06:00:   175 |
+2026-01-31 18:01:24 -06:00: > 176 |   const workflowsQuery = trpc.workflows.list.useQuery({
+2026-01-31 18:01:24 -06:00:       |                                              ^
+2026-01-31 18:01:24 -06:00:   177 |     search: searchQuery || undefined,
+2026-01-31 18:01:24 -06:00:   178 |     status: activeFilter === "missing" ? WORKFLOW_STATUS.SCANNED_MISSING :
+2026-01-31 18:01:24 -06:00:   179 |             activeFilter === "not-scanned" ? WORKFLOW_STATUS.NEW : {
+2026-01-31 18:01:24 -06:00:   digest: '2483906779'
+2026-01-31 18:01:24 -06:00: }
+2026-01-31 18:01:27 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:01:27 -06:00:     at WorkflowsContent (src/app/workflows/page.tsx:176:46)
+2026-01-31 18:01:27 -06:00:   174 |   };
+2026-01-31 18:01:27 -06:00:   175 |
+2026-01-31 18:01:27 -06:00: > 176 |   const workflowsQuery = trpc.workflows.list.useQuery({
+2026-01-31 18:01:27 -06:00:       |                                              ^
+2026-01-31 18:01:27 -06:00:   177 |     search: searchQuery || undefined,
+2026-01-31 18:01:27 -06:00:   178 |     status: activeFilter === "missing" ? WORKFLOW_STATUS.SCANNED_MISSING :
+2026-01-31 18:01:27 -06:00:   179 |             activeFilter === "not-scanned" ? WORKFLOW_STATUS.NEW : {
+2026-01-31 18:01:27 -06:00:   digest: '2483906779'
+2026-01-31 18:01:27 -06:00: }
+2026-01-31 18:01:30 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:01:30 -06:00:     at ModelsContent (src/app/models/page.tsx:59:40)
+2026-01-31 18:01:30 -06:00:   57 |   const { viewMode, setViewMode } = useViewMode();
+2026-01-31 18:01:30 -06:00:   58 |
+2026-01-31 18:01:30 -06:00: > 59 |   const modelsQuery = trpc.models.list.useQuery({
+2026-01-31 18:01:30 -06:00:      |                                        ^
+2026-01-31 18:01:30 -06:00:   60 |     search: searchQuery || undefined,
+2026-01-31 18:01:30 -06:00:   61 |     location: locationFilter !== "all" ? (locationFilter as "local" | "warehouse") : undefined,
+2026-01-31 18:01:30 -06:00:   62 |     type: typeFilter !== "all" ? typeFilter : undefined, {
+2026-01-31 18:01:30 -06:00:   digest: '3221396716'
+2026-01-31 18:01:30 -06:00: }
+2026-01-31 18:01:36 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:01:36 -06:00:     at TasksContent (src/app/tasks/page.tsx:20:39)
+2026-01-31 18:01:36 -06:00:   18 |
+2026-01-31 18:01:36 -06:00:   19 |   // Get stats
+2026-01-31 18:01:36 -06:00: > 20 |   const statsQuery = trpc.tasks.stats.useQuery(undefined, {
+2026-01-31 18:01:36 -06:00:      |                                       ^
+2026-01-31 18:01:36 -06:00:   21 |     refetchInterval: autoRefresh ? 2000 : false,
+2026-01-31 18:01:36 -06:00:   22 |   });
+2026-01-31 18:01:36 -06:00:   23 | {
+2026-01-31 18:01:36 -06:00:   digest: '3630203459'
+2026-01-31 18:01:36 -06:00: }
+2026-01-31 18:02:52 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:02:52 -06:00:     at WorkflowsContent (src/app/workflows/page.tsx:176:46)
+2026-01-31 18:02:52 -06:00:   174 |   };
+2026-01-31 18:02:52 -06:00:   175 |
+2026-01-31 18:02:52 -06:00: > 176 |   const workflowsQuery = trpc.workflows.list.useQuery({
+2026-01-31 18:02:52 -06:00:       |                                              ^
+2026-01-31 18:02:52 -06:00:   177 |     search: searchQuery || undefined,
+2026-01-31 18:02:52 -06:00:   178 |     status: activeFilter === "missing" ? WORKFLOW_STATUS.SCANNED_MISSING :
+2026-01-31 18:02:52 -06:00:   179 |             activeFilter === "not-scanned" ? WORKFLOW_STATUS.NEW : {
+2026-01-31 18:02:52 -06:00:   digest: '2175754828'
+2026-01-31 18:02:52 -06:00: }
+2026-01-31 18:02:52 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:02:52 -06:00:     at WorkflowsContent (src/app/workflows/page.tsx:176:46)
+2026-01-31 18:02:52 -06:00:   174 |   };
+2026-01-31 18:02:52 -06:00:   175 |
+2026-01-31 18:02:52 -06:00: > 176 |   const workflowsQuery = trpc.workflows.list.useQuery({
+2026-01-31 18:02:52 -06:00:       |                                              ^
+2026-01-31 18:02:52 -06:00:   177 |     search: searchQuery || undefined,
+2026-01-31 18:02:52 -06:00:   178 |     status: activeFilter === "missing" ? WORKFLOW_STATUS.SCANNED_MISSING :
+2026-01-31 18:02:52 -06:00:   179 |             activeFilter === "not-scanned" ? WORKFLOW_STATUS.NEW : {
+2026-01-31 18:02:52 -06:00:   digest: '2175754828'
+2026-01-31 18:02:52 -06:00: }
+2026-01-31 18:02:53 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:02:53 -06:00:     at WorkflowsContent (src/app/workflows/page.tsx:176:46)
+2026-01-31 18:02:53 -06:00:   174 |   };
+2026-01-31 18:02:53 -06:00:   175 |
+2026-01-31 18:02:53 -06:00: > 176 |   const workflowsQuery = trpc.workflows.list.useQuery({
+2026-01-31 18:02:53 -06:00:       |                                              ^
+2026-01-31 18:02:53 -06:00:   177 |     search: searchQuery || undefined,
+2026-01-31 18:02:53 -06:00:   178 |     status: activeFilter === "missing" ? WORKFLOW_STATUS.SCANNED_MISSING :
+2026-01-31 18:02:53 -06:00:   179 |             activeFilter === "not-scanned" ? WORKFLOW_STATUS.NEW : {
+2026-01-31 18:02:53 -06:00:   digest: '2175754828'
+2026-01-31 18:02:53 -06:00: }
+2026-01-31 18:02:56 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:02:56 -06:00:     at ModelsContent (src/app/models/page.tsx:59:40)
+2026-01-31 18:02:56 -06:00:   57 |   const { viewMode, setViewMode } = useViewMode();
+2026-01-31 18:02:56 -06:00:   58 |
+2026-01-31 18:02:56 -06:00: > 59 |   const modelsQuery = trpc.models.list.useQuery({
+2026-01-31 18:02:56 -06:00:      |                                        ^
+2026-01-31 18:02:56 -06:00:   60 |     search: searchQuery || undefined,
+2026-01-31 18:02:56 -06:00:   61 |     location: locationFilter !== "all" ? (locationFilter as "local" | "warehouse") : undefined,
+2026-01-31 18:02:56 -06:00:   62 |     type: typeFilter !== "all" ? typeFilter : undefined, {
+2026-01-31 18:02:56 -06:00:   digest: '2416052827'
+2026-01-31 18:02:56 -06:00: }
+2026-01-31 18:03:03 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:03:03 -06:00:     at TasksContent (src/app/tasks/page.tsx:20:39)
+2026-01-31 18:03:03 -06:00:   18 |
+2026-01-31 18:03:03 -06:00:   19 |   // Get stats
+2026-01-31 18:03:03 -06:00: > 20 |   const statsQuery = trpc.tasks.stats.useQuery(undefined, {
+2026-01-31 18:03:03 -06:00:      |                                       ^
+2026-01-31 18:03:03 -06:00:   21 |     refetchInterval: autoRefresh ? 2000 : false,
+2026-01-31 18:03:03 -06:00:   22 |   });
+2026-01-31 18:03:03 -06:00:   23 | {
+2026-01-31 18:03:03 -06:00:   digest: '224311316'
+2026-01-31 18:03:03 -06:00: }
+2026-01-31 18:03:22 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:03:22 -06:00:     at WorkflowsContent (src/app/workflows/page.tsx:176:46)
+2026-01-31 18:03:22 -06:00:   174 |   };
+2026-01-31 18:03:22 -06:00:   175 |
+2026-01-31 18:03:22 -06:00: > 176 |   const workflowsQuery = trpc.workflows.list.useQuery({
+2026-01-31 18:03:22 -06:00:       |                                              ^
+2026-01-31 18:03:22 -06:00:   177 |     search: searchQuery || undefined,
+2026-01-31 18:03:22 -06:00:   178 |     status: activeFilter === "missing" ? WORKFLOW_STATUS.SCANNED_MISSING :
+2026-01-31 18:03:22 -06:00:   179 |             activeFilter === "not-scanned" ? WORKFLOW_STATUS.NEW : {
+2026-01-31 18:03:22 -06:00:   digest: '2175754828'
+2026-01-31 18:03:22 -06:00: }
+2026-01-31 18:03:25 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:03:25 -06:00:     at WorkflowsContent (src/app/workflows/page.tsx:176:46)
+2026-01-31 18:03:25 -06:00:   174 |   };
+2026-01-31 18:03:25 -06:00:   175 |
+2026-01-31 18:03:25 -06:00: > 176 |   const workflowsQuery = trpc.workflows.list.useQuery({
+2026-01-31 18:03:25 -06:00:       |                                              ^
+2026-01-31 18:03:25 -06:00:   177 |     search: searchQuery || undefined,
+2026-01-31 18:03:25 -06:00:   178 |     status: activeFilter === "missing" ? WORKFLOW_STATUS.SCANNED_MISSING :
+2026-01-31 18:03:25 -06:00:   179 |             activeFilter === "not-scanned" ? WORKFLOW_STATUS.NEW : {
+2026-01-31 18:03:25 -06:00:   digest: '2175754828'
+2026-01-31 18:03:25 -06:00: }
+2026-01-31 18:03:28 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:03:28 -06:00:     at ModelsContent (src/app/models/page.tsx:59:40)
+2026-01-31 18:03:28 -06:00:   57 |   const { viewMode, setViewMode } = useViewMode();
+2026-01-31 18:03:28 -06:00:   58 |
+2026-01-31 18:03:28 -06:00: > 59 |   const modelsQuery = trpc.models.list.useQuery({
+2026-01-31 18:03:28 -06:00:      |                                        ^
+2026-01-31 18:03:28 -06:00:   60 |     search: searchQuery || undefined,
+2026-01-31 18:03:28 -06:00:   61 |     location: locationFilter !== "all" ? (locationFilter as "local" | "warehouse") : undefined,
+2026-01-31 18:03:28 -06:00:   62 |     type: typeFilter !== "all" ? typeFilter : undefined, {
+2026-01-31 18:03:28 -06:00:   digest: '2416052827'
+2026-01-31 18:03:28 -06:00: }
+2026-01-31 18:03:34 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:03:34 -06:00:     at TasksContent (src/app/tasks/page.tsx:20:39)
+2026-01-31 18:03:34 -06:00:   18 |
+2026-01-31 18:03:34 -06:00:   19 |   // Get stats
+2026-01-31 18:03:34 -06:00: > 20 |   const statsQuery = trpc.tasks.stats.useQuery(undefined, {
+2026-01-31 18:03:34 -06:00:      |                                       ^
+2026-01-31 18:03:34 -06:00:   21 |     refetchInterval: autoRefresh ? 2000 : false,
+2026-01-31 18:03:34 -06:00:   22 |   });
+2026-01-31 18:03:34 -06:00:   23 | {
+2026-01-31 18:03:34 -06:00:   digest: '224311316'
+2026-01-31 18:03:34 -06:00: }
+2026-01-31 18:03:53 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:03:53 -06:00:     at WorkflowsContent (src/app/workflows/page.tsx:176:46)
+2026-01-31 18:03:53 -06:00:   174 |   };
+2026-01-31 18:03:53 -06:00:   175 |
+2026-01-31 18:03:53 -06:00: > 176 |   const workflowsQuery = trpc.workflows.list.useQuery({
+2026-01-31 18:03:53 -06:00:       |                                              ^
+2026-01-31 18:03:53 -06:00:   177 |     search: searchQuery || undefined,
+2026-01-31 18:03:53 -06:00:   178 |     status: activeFilter === "missing" ? WORKFLOW_STATUS.SCANNED_MISSING :
+2026-01-31 18:03:53 -06:00:   179 |             activeFilter === "not-scanned" ? WORKFLOW_STATUS.NEW : {
+2026-01-31 18:03:53 -06:00:   digest: '2175754828'
+2026-01-31 18:03:53 -06:00: }
+2026-01-31 18:03:56 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:03:56 -06:00:     at WorkflowsContent (src/app/workflows/page.tsx:176:46)
+2026-01-31 18:03:56 -06:00:   174 |   };
+2026-01-31 18:03:56 -06:00:   175 |
+2026-01-31 18:03:56 -06:00: > 176 |   const workflowsQuery = trpc.workflows.list.useQuery({
+2026-01-31 18:03:56 -06:00:       |                                              ^
+2026-01-31 18:03:56 -06:00:   177 |     search: searchQuery || undefined,
+2026-01-31 18:03:56 -06:00:   178 |     status: activeFilter === "missing" ? WORKFLOW_STATUS.SCANNED_MISSING :
+2026-01-31 18:03:56 -06:00:   179 |             activeFilter === "not-scanned" ? WORKFLOW_STATUS.NEW : {
+2026-01-31 18:03:56 -06:00:   digest: '2175754828'
+2026-01-31 18:03:56 -06:00: }
+2026-01-31 18:03:59 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:03:59 -06:00:     at ModelsContent (src/app/models/page.tsx:59:40)
+2026-01-31 18:03:59 -06:00:   57 |   const { viewMode, setViewMode } = useViewMode();
+2026-01-31 18:03:59 -06:00:   58 |
+2026-01-31 18:03:59 -06:00: > 59 |   const modelsQuery = trpc.models.list.useQuery({
+2026-01-31 18:03:59 -06:00:      |                                        ^
+2026-01-31 18:03:59 -06:00:   60 |     search: searchQuery || undefined,
+2026-01-31 18:03:59 -06:00:   61 |     location: locationFilter !== "all" ? (locationFilter as "local" | "warehouse") : undefined,
+2026-01-31 18:03:59 -06:00:   62 |     type: typeFilter !== "all" ? typeFilter : undefined, {
+2026-01-31 18:03:59 -06:00:   digest: '2416052827'
+2026-01-31 18:03:59 -06:00: }
+2026-01-31 18:04:04 -06:00: ⨯ Error: Unable to find tRPC Context. Did you forget to wrap your App inside `withTRPC` HoC?
+2026-01-31 18:04:04 -06:00:     at TasksContent (src/app/tasks/page.tsx:20:39)
+2026-01-31 18:04:04 -06:00:   18 |
+2026-01-31 18:04:04 -06:00:   19 |   // Get stats
+2026-01-31 18:04:04 -06:00: > 20 |   const statsQuery = trpc.tasks.stats.useQuery(undefined, {
+2026-01-31 18:04:04 -06:00:      |                                       ^
+2026-01-31 18:04:04 -06:00:   21 |     refetchInterval: autoRefresh ? 2000 : false,
+2026-01-31 18:04:04 -06:00:   22 |   });
+2026-01-31 18:04:04 -06:00:   23 | {
+2026-01-31 18:04:04 -06:00:   digest: '224311316'
+2026-01-31 18:04:04 -06:00: }

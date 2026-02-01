@@ -1,0 +1,208 @@
+2026-01-31 17:59:14 -06:00: 
+2026-01-31 17:59:14 -06:00: > sminventory@0.1.0 dev
+2026-01-31 17:59:14 -06:00: > next dev -p 6660
+2026-01-31 17:59:14 -06:00: 
+2026-01-31 17:59:29 -06:00: [?25h
+2026-01-31 17:59:29 -06:00: 
+2026-01-31 17:59:33 -06:00: 
+2026-01-31 17:59:33 -06:00: > sminventory@0.1.0 dev
+2026-01-31 17:59:33 -06:00: > next dev -p 6660
+2026-01-31 17:59:33 -06:00: 
+2026-01-31 17:59:41 -06:00: 
+2026-01-31 17:59:41 -06:00: > sminventory@0.1.0 dev
+2026-01-31 17:59:41 -06:00: > next dev -p 6660
+2026-01-31 17:59:41 -06:00: 
+2026-01-31 17:59:57 -06:00: ▲ Next.js 16.1.6 (Turbopack)
+2026-01-31 17:59:57 -06:00: - Local:         http://localhost:6660
+2026-01-31 17:59:57 -06:00: - Network:       http://10.255.255.254:6660
+2026-01-31 17:59:57 -06:00: - Environments: .env
+2026-01-31 17:59:57 -06:00: 
+2026-01-31 17:59:57 -06:00: ✓ Starting...
+2026-01-31 18:00:08 -06:00: ✓ Ready in 16.7s
+2026-01-31 18:00:12 -06:00: ○ Compiling / ...
+2026-01-31 18:00:17 -06:00:  GET /workflows 200 in 8.1s (compile: 7.6s, render: 522ms)
+2026-01-31 18:00:17 -06:00:  GET /workflows?view=table 200 in 8.2s (compile: 7.7s, render: 476ms)
+2026-01-31 18:00:20 -06:00:  GET /workflows?view=table 200 in 155ms (compile: 45ms, render: 110ms)
+2026-01-31 18:00:24 -06:00:  GET /models 200 in 1180ms (compile: 995ms, render: 185ms)
+2026-01-31 18:00:28 -06:00:  GET /downloads 200 in 717ms (compile: 574ms, render: 144ms)
+2026-01-31 18:00:32 -06:00:  GET /tasks 200 in 983ms (compile: 793ms, render: 190ms)
+2026-01-31 18:00:35 -06:00:  GET /settings 200 in 750ms (compile: 611ms, render: 139ms)
+2026-01-31 18:00:52 -06:00:  GET / 200 in 79ms (compile: 25ms, render: 54ms)
+2026-01-31 18:00:54 -06:00:  GET /workflows 200 in 100ms (compile: 26ms, render: 75ms)
+2026-01-31 18:00:57 -06:00:  GET /workflows?view=table 200 in 82ms (compile: 24ms, render: 58ms)
+2026-01-31 18:01:00 -06:00:  GET /models 200 in 76ms (compile: 23ms, render: 54ms)
+2026-01-31 18:01:03 -06:00:  GET /downloads 200 in 62ms (compile: 23ms, render: 40ms)
+2026-01-31 18:01:06 -06:00:  GET /tasks 200 in 79ms (compile: 22ms, render: 57ms)
+2026-01-31 18:01:09 -06:00:  GET /settings 200 in 68ms (compile: 22ms, render: 46ms)
+2026-01-31 18:01:21 -06:00:  GET / 200 in 55ms (compile: 20ms, render: 35ms)
+2026-01-31 18:01:24 -06:00:  GET /workflows 200 in 80ms (compile: 22ms, render: 58ms)
+2026-01-31 18:01:27 -06:00:  GET /workflows?view=table 200 in 81ms (compile: 25ms, render: 56ms)
+2026-01-31 18:01:30 -06:00:  GET /models 200 in 68ms (compile: 22ms, render: 46ms)
+2026-01-31 18:01:33 -06:00:  GET /downloads 200 in 65ms (compile: 23ms, render: 42ms)
+2026-01-31 18:01:36 -06:00:  GET /tasks 200 in 75ms (compile: 22ms, render: 52ms)
+2026-01-31 18:01:39 -06:00:  GET /settings 200 in 68ms (compile: 23ms, render: 45ms)
+2026-01-31 18:02:23 -06:00: 
+2026-01-31 18:02:23 -06:00: > sminventory@0.1.0 dev
+2026-01-31 18:02:23 -06:00: > next dev -p 6660
+2026-01-31 18:02:23 -06:00: 
+2026-01-31 18:02:37 -06:00: ▲ Next.js 16.1.6 (Turbopack)
+2026-01-31 18:02:37 -06:00: - Local:         http://localhost:6660
+2026-01-31 18:02:37 -06:00: - Network:       http://10.255.255.254:6660
+2026-01-31 18:02:37 -06:00: - Environments: .env
+2026-01-31 18:02:37 -06:00: 
+2026-01-31 18:02:37 -06:00: ✓ Starting...
+2026-01-31 18:02:46 -06:00: ✓ Ready in 13.8s
+2026-01-31 18:02:50 -06:00: ○ Compiling /workflows ...
+2026-01-31 18:02:52 -06:00:  GET /workflows?view=table 500 in 5.3s (compile: 4.6s, render: 722ms)
+2026-01-31 18:02:52 -06:00:  GET /workflows 500 in 5.4s (compile: 4.7s, render: 625ms)
+2026-01-31 18:02:53 -06:00:  GET /workflows?view=table 500 in 138ms (compile: 32ms, render: 106ms)
+2026-01-31 18:02:56 -06:00:  GET /models 500 in 536ms (compile: 351ms, render: 185ms)
+2026-01-31 18:03:00 -06:00:  GET /downloads 200 in 401ms (compile: 252ms, render: 149ms)
+2026-01-31 18:03:03 -06:00:  GET /tasks 500 in 467ms (compile: 315ms, render: 152ms)
+2026-01-31 18:03:06 -06:00:  GET /settings 200 in 335ms (compile: 210ms, render: 124ms)
+2026-01-31 18:03:19 -06:00:  GET / 200 in 230ms (compile: 142ms, render: 88ms)
+2026-01-31 18:03:22 -06:00:  GET /workflows 500 in 101ms (compile: 23ms, render: 78ms)
+2026-01-31 18:03:25 -06:00:  GET /workflows?view=table 500 in 91ms (compile: 23ms, render: 68ms)
+2026-01-31 18:03:28 -06:00:  GET /models 500 in 100ms (compile: 23ms, render: 77ms)
+2026-01-31 18:03:31 -06:00:  GET /downloads 200 in 62ms (compile: 21ms, render: 41ms)
+2026-01-31 18:03:34 -06:00:  GET /tasks 500 in 84ms (compile: 23ms, render: 61ms)
+2026-01-31 18:03:36 -06:00:  GET /settings 200 in 69ms (compile: 21ms, render: 48ms)
+2026-01-31 18:03:50 -06:00:  GET / 200 in 65ms (compile: 19ms, render: 45ms)
+2026-01-31 18:03:53 -06:00:  GET /workflows 500 in 83ms (compile: 23ms, render: 60ms)
+2026-01-31 18:03:56 -06:00:  GET /workflows?view=table 500 in 83ms (compile: 25ms, render: 58ms)
+2026-01-31 18:03:59 -06:00:  GET /models 500 in 82ms (compile: 22ms, render: 60ms)
+2026-01-31 18:04:02 -06:00:  GET /downloads 200 in 62ms (compile: 21ms, render: 41ms)
+2026-01-31 18:04:04 -06:00:  GET /tasks 500 in 98ms (compile: 25ms, render: 74ms)
+2026-01-31 18:40:02 -06:00: 
+2026-01-31 18:40:02 -06:00: > sminventory@0.1.0 dev
+2026-01-31 18:40:02 -06:00: > next dev -p 6660
+2026-01-31 18:40:02 -06:00: 
+2026-01-31 18:40:17 -06:00: ▲ Next.js 16.1.6 (Turbopack)
+2026-01-31 18:40:17 -06:00: - Local:         http://localhost:6660
+2026-01-31 18:40:17 -06:00: - Network:       http://10.255.255.254:6660
+2026-01-31 18:40:17 -06:00: - Environments: .env
+2026-01-31 18:40:17 -06:00: 
+2026-01-31 18:40:17 -06:00: ✓ Starting...
+2026-01-31 18:40:26 -06:00: ✓ Ready in 14.1s
+2026-01-31 18:40:29 -06:00: ○ Compiling /workflows ...
+2026-01-31 18:40:32 -06:00:  GET /workflows?view=table 200 in 6.0s (compile: 5.3s, render: 690ms)
+2026-01-31 18:40:32 -06:00:  GET /workflows 200 in 6.0s (compile: 5.4s, render: 579ms)
+2026-01-31 18:40:34 -06:00:  GET /workflows?view=table 200 in 483ms (compile: 159ms, render: 323ms)
+2026-01-31 18:40:35 -06:00:  GET /workflows?view=table 200 in 116ms (compile: 36ms, render: 80ms)
+2026-01-31 18:40:43 -06:00:  GET /api/trpc/workflows.list,workflows.stats?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22search%22%3Anull%2C%22status%22%3Anull%7D%2C%22meta%22%3A%7B%22values%22%3A%7B%22search%22%3A%5B%22undefined%22%5D%2C%22status%22%3A%5B%22undefined%22%5D%7D%2C%22v%22%3A1%7D%7D%2C%221%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%7D 500 in 7.4s (compile: 7.2s, render: 132ms)
+2026-01-31 18:40:43 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 500 in 9.8s (compile: 9.7s, render: 137ms)
+2026-01-31 18:40:43 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 500 in 7.4s (compile: 7.2s, render: 133ms)
+2026-01-31 18:40:45 -06:00:  GET /api/trpc/workflows.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22search%22%3Anull%2C%22status%22%3Anull%7D%2C%22meta%22%3A%7B%22values%22%3A%7B%22search%22%3A%5B%22undefined%22%5D%2C%22status%22%3A%5B%22undefined%22%5D%7D%2C%22v%22%3A1%7D%7D%7D 500 in 96ms (compile: 75ms, render: 21ms)
+2026-01-31 18:40:45 -06:00:  GET /api/trpc/workflows.stats?batch=1&input=%7B%220%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%7D 500 in 112ms (compile: 93ms, render: 19ms)
+2026-01-31 18:40:45 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 500 in 35ms (compile: 16ms, render: 20ms)
+2026-01-31 18:40:47 -06:00:  GET /models 200 in 736ms (compile: 529ms, render: 208ms)
+2026-01-31 18:40:47 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 500 in 43ms (compile: 15ms, render: 29ms)
+2026-01-31 18:40:47 -06:00:  GET /api/trpc/models.list,models.stats?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22search%22%3Anull%2C%22location%22%3Anull%2C%22type%22%3Anull%2C%22limit%22%3A500%7D%2C%22meta%22%3A%7B%22values%22%3A%7B%22search%22%3A%5B%22undefined%22%5D%2C%22location%22%3A%5B%22undefined%22%5D%2C%22type%22%3A%5B%22undefined%22%5D%7D%2C%22v%22%3A1%7D%7D%2C%221%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%7D 500 in 37ms (compile: 13ms, render: 23ms)
+2026-01-31 18:40:48 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 500 in 35ms (compile: 12ms, render: 22ms)
+2026-01-31 18:40:48 -06:00:  GET /api/trpc/models.list,models.stats?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22search%22%3Anull%2C%22location%22%3Anull%2C%22type%22%3Anull%2C%22limit%22%3A500%7D%2C%22meta%22%3A%7B%22values%22%3A%7B%22search%22%3A%5B%22undefined%22%5D%2C%22location%22%3A%5B%22undefined%22%5D%2C%22type%22%3A%5B%22undefined%22%5D%7D%2C%22v%22%3A1%7D%7D%2C%221%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%7D 500 in 31ms (compile: 12ms, render: 19ms)
+2026-01-31 18:40:50 -06:00:  GET /downloads 200 in 429ms (compile: 312ms, render: 118ms)
+2026-01-31 18:40:51 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 500 in 30ms (compile: 12ms, render: 18ms)
+2026-01-31 18:40:52 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 500 in 27ms (compile: 11ms, render: 16ms)
+2026-01-31 18:40:54 -06:00:  GET /tasks 200 in 428ms (compile: 299ms, render: 130ms)
+2026-01-31 18:40:54 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 500 in 73ms (compile: 53ms, render: 20ms)
+2026-01-31 18:40:54 -06:00:  GET /api/trpc/tasks.stats,tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%2C%221%22%3A%7B%22json%22%3A%7B%22limit%22%3A50%7D%7D%7D 500 in 29ms (compile: 11ms, render: 18ms)
+2026-01-31 18:40:55 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 500 in 29ms (compile: 12ms, render: 17ms)
+2026-01-31 18:40:55 -06:00:  GET /api/trpc/tasks.stats,tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%2C%221%22%3A%7B%22json%22%3A%7B%22limit%22%3A50%7D%7D%7D 500 in 29ms (compile: 11ms, render: 18ms)
+2026-01-31 18:40:57 -06:00:  GET /settings 200 in 483ms (compile: 340ms, render: 143ms)
+2026-01-31 18:40:57 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 500 in 28ms (compile: 11ms, render: 17ms)
+2026-01-31 18:40:58 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 500 in 27ms (compile: 11ms, render: 16ms)
+2026-01-31 18:41:19 -06:00: 
+2026-01-31 18:41:19 -06:00: > sminventory@0.1.0 dev
+2026-01-31 18:41:19 -06:00: > next dev -p 6660
+2026-01-31 18:41:19 -06:00: 
+2026-01-31 18:41:33 -06:00: ▲ Next.js 16.1.6 (Turbopack)
+2026-01-31 18:41:33 -06:00: - Local:         http://localhost:6660
+2026-01-31 18:41:33 -06:00: - Network:       http://10.255.255.254:6660
+2026-01-31 18:41:33 -06:00: - Environments: .env
+2026-01-31 18:41:33 -06:00: 
+2026-01-31 18:41:33 -06:00: ✓ Starting...
+2026-01-31 18:41:42 -06:00: ✓ Ready in 13.8s
+2026-01-31 18:41:46 -06:00:  GET /workflows 200 in 3.1s (compile: 2.4s, render: 690ms)
+2026-01-31 18:41:46 -06:00:  GET /workflows?view=table 200 in 3.1s (compile: 2.5s, render: 567ms)
+2026-01-31 18:41:46 -06:00:  GET /workflows?view=table 200 in 330ms (compile: 104ms, render: 227ms)
+2026-01-31 18:41:51 -06:00:  GET /api/trpc/workflows.list,workflows.stats?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22search%22%3Anull%2C%22status%22%3Anull%7D%2C%22meta%22%3A%7B%22values%22%3A%7B%22search%22%3A%5B%22undefined%22%5D%2C%22status%22%3A%5B%22undefined%22%5D%7D%2C%22v%22%3A1%7D%7D%2C%221%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%7D 200 in 4.2s
+2026-01-31 18:41:51 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 200 in 4.5s
+2026-01-31 18:41:51 -06:00:  GET /workflows?view=table 200 in 73ms (compile: 24ms, render: 49ms)
+2026-01-31 18:41:54 -06:00:  GET /api/trpc/workflows.list,workflows.stats?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22search%22%3Anull%2C%22status%22%3Anull%7D%2C%22meta%22%3A%7B%22values%22%3A%7B%22search%22%3A%5B%22undefined%22%5D%2C%22status%22%3A%5B%22undefined%22%5D%7D%2C%22v%22%3A1%7D%7D%2C%221%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%7D 200 in 3.2s (compile: 3.0s, render: 114ms)
+2026-01-31 18:41:54 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 200 in 6.8s (compile: 6.7s, render: 114ms)
+2026-01-31 18:41:54 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 200 in 3.3s (compile: 3.2s, render: 114ms)
+2026-01-31 18:41:57 -06:00:  GET /models 200 in 525ms (compile: 343ms, render: 182ms)
+2026-01-31 18:41:58 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 200 in 67ms (compile: 48ms, render: 20ms)
+2026-01-31 18:41:58 -06:00:  GET /api/trpc/models.list,models.stats?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22search%22%3Anull%2C%22location%22%3Anull%2C%22type%22%3Anull%2C%22limit%22%3A500%7D%2C%22meta%22%3A%7B%22values%22%3A%7B%22search%22%3A%5B%22undefined%22%5D%2C%22location%22%3A%5B%22undefined%22%5D%2C%22type%22%3A%5B%22undefined%22%5D%7D%2C%22v%22%3A1%7D%7D%2C%221%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%7D 200 in 33ms (compile: 14ms, render: 20ms)
+2026-01-31 18:42:01 -06:00:  GET /downloads 200 in 372ms (compile: 229ms, render: 144ms)
+2026-01-31 18:42:01 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 200 in 29ms (compile: 12ms, render: 17ms)
+2026-01-31 18:42:04 -06:00:  GET /tasks 200 in 364ms (compile: 228ms, render: 136ms)
+2026-01-31 18:42:04 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 200 in 49ms (compile: 28ms, render: 21ms)
+2026-01-31 18:42:04 -06:00:  GET /api/trpc/tasks.stats,tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%2C%221%22%3A%7B%22json%22%3A%7B%22limit%22%3A50%7D%7D%7D 200 in 32ms (compile: 12ms, render: 20ms)
+2026-01-31 18:42:06 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 200 in 65ms (compile: 47ms, render: 18ms)
+2026-01-31 18:42:07 -06:00:  GET /api/trpc/tasks.stats?batch=1&input=%7B%220%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%7D 200 in 29ms (compile: 12ms, render: 17ms)
+2026-01-31 18:42:07 -06:00:  GET /settings 200 in 356ms (compile: 223ms, render: 133ms)
+2026-01-31 18:42:08 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 200 in 32ms (compile: 13ms, render: 18ms)
+2026-01-31 19:00:36 -06:00: 
+2026-01-31 19:00:36 -06:00: > sminventory@0.1.0 dev
+2026-01-31 19:00:36 -06:00: > next dev -p 6660
+2026-01-31 19:00:36 -06:00: 
+2026-01-31 19:00:51 -06:00: ▲ Next.js 16.1.6 (Turbopack)
+2026-01-31 19:00:51 -06:00: - Local:         http://localhost:6660
+2026-01-31 19:00:51 -06:00: - Network:       http://10.255.255.254:6660
+2026-01-31 19:00:51 -06:00: - Environments: .env
+2026-01-31 19:00:51 -06:00: 
+2026-01-31 19:00:51 -06:00: ✓ Starting...
+2026-01-31 19:01:00 -06:00: ✓ Ready in 13.8s
+2026-01-31 19:01:03 -06:00:  GET /workflows?view=table 200 in 3.0s (compile: 2.3s, render: 637ms)
+2026-01-31 19:01:03 -06:00:  GET /workflows 200 in 3.0s (compile: 2.5s, render: 542ms)
+2026-01-31 19:01:03 -06:00:  GET /workflows?view=table 200 in 327ms (compile: 40ms, render: 288ms)
+2026-01-31 19:01:07 -06:00:  GET /api/trpc/workflows.list,workflows.stats?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22search%22%3Anull%2C%22status%22%3Anull%7D%2C%22meta%22%3A%7B%22values%22%3A%7B%22search%22%3A%5B%22undefined%22%5D%2C%22status%22%3A%5B%22undefined%22%5D%7D%2C%22v%22%3A1%7D%7D%2C%221%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%7D 200 in 3.5s
+2026-01-31 19:01:07 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 200 in 3.9s
+2026-01-31 19:01:07 -06:00:  GET /workflows?view=table 200 in 87ms (compile: 28ms, render: 59ms)
+2026-01-31 19:01:11 -06:00:  GET /api/trpc/workflows.list,workflows.stats?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22search%22%3Anull%2C%22status%22%3Anull%7D%2C%22meta%22%3A%7B%22values%22%3A%7B%22search%22%3A%5B%22undefined%22%5D%2C%22status%22%3A%5B%22undefined%22%5D%7D%2C%22v%22%3A1%7D%7D%2C%221%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%7D 200 in 3.6s (compile: 3.5s, render: 106ms)
+2026-01-31 19:01:11 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 200 in 6.6s (compile: 6.5s, render: 107ms)
+2026-01-31 19:01:11 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 200 in 3.7s (compile: 3.6s, render: 107ms)
+2026-01-31 19:01:14 -06:00:  GET /models 200 in 518ms (compile: 335ms, render: 184ms)
+2026-01-31 19:01:15 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 200 in 70ms (compile: 45ms, render: 25ms)
+2026-01-31 19:01:15 -06:00:  GET /api/trpc/models.list,models.stats?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22search%22%3Anull%2C%22location%22%3Anull%2C%22type%22%3Anull%2C%22limit%22%3A500%7D%2C%22meta%22%3A%7B%22values%22%3A%7B%22search%22%3A%5B%22undefined%22%5D%2C%22location%22%3A%5B%22undefined%22%5D%2C%22type%22%3A%5B%22undefined%22%5D%7D%2C%22v%22%3A1%7D%7D%2C%221%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%7D 200 in 31ms (compile: 12ms, render: 20ms)
+2026-01-31 19:01:18 -06:00:  GET /downloads 200 in 344ms (compile: 214ms, render: 129ms)
+2026-01-31 19:01:18 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 200 in 29ms (compile: 11ms, render: 18ms)
+2026-01-31 19:01:21 -06:00:  GET /tasks 200 in 417ms (compile: 268ms, render: 150ms)
+2026-01-31 19:01:21 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 200 in 59ms (compile: 38ms, render: 21ms)
+2026-01-31 19:01:21 -06:00:  GET /api/trpc/tasks.stats,tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%2C%221%22%3A%7B%22json%22%3A%7B%22limit%22%3A50%7D%7D%7D 200 in 34ms (compile: 14ms, render: 19ms)
+2026-01-31 19:01:23 -06:00:  GET /workflows?view=table 200 in 85ms (compile: 30ms, render: 55ms)
+2026-01-31 19:01:23 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 200 in 90ms (compile: 72ms, render: 19ms)
+2026-01-31 19:01:24 -06:00:  GET /api/trpc/tasks.stats?batch=1&input=%7B%220%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%7D 200 in 41ms (compile: 19ms, render: 22ms)
+2026-01-31 19:01:24 -06:00:  GET /settings 200 in 406ms (compile: 241ms, render: 164ms)
+2026-01-31 19:01:25 -06:00:  GET /api/trpc/tasks.list?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22status%22%3A%22running%22%2C%22limit%22%3A100%7D%7D%7D 200 in 31ms (compile: 12ms, render: 18ms)
+2026-01-31 19:01:28 -06:00:  GET /models 200 in 49ms (compile: 24ms, render: 25ms)
+2026-01-31 19:01:28 -06:00:  GET /api/trpc/models.list,models.stats?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22search%22%3Anull%2C%22location%22%3Anull%2C%22type%22%3Anull%2C%22limit%22%3A500%7D%2C%22meta%22%3A%7B%22values%22%3A%7B%22search%22%3A%5B%22undefined%22%5D%2C%22location%22%3A%5B%22undefined%22%5D%2C%22type%22%3A%5B%22undefined%22%5D%7D%2C%22v%22%3A1%7D%7D%2C%221%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%7D 200 in 31ms (compile: 12ms, render: 19ms)
+2026-01-31 19:01:30 -06:00:  GET / 200 in 195ms (compile: 168ms, render: 27ms)
+2026-01-31 19:01:31 -06:00:  GET /api/trpc/workflows.list,workflows.stats?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22search%22%3Anull%7D%2C%22meta%22%3A%7B%22values%22%3A%7B%22search%22%3A%5B%22undefined%22%5D%7D%2C%22v%22%3A1%7D%7D%2C%221%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%7D 200 in 29ms (compile: 11ms, render: 17ms)
+2026-01-31 19:01:32 -06:00:  GET /workflows 200 in 48ms (compile: 22ms, render: 25ms)
+2026-01-31 19:01:32 -06:00:  GET /workflows?view=table 200 in 60ms (compile: 31ms, render: 29ms)
+2026-01-31 19:01:32 -06:00:  GET /models 200 in 49ms (compile: 23ms, render: 26ms)
+2026-01-31 19:01:34 -06:00: Starting scan of /mnt/e/StabilityMatrix/Data/Models (local, validation: standard)
+2026-01-31 19:01:34 -06:00: Found 76 model files
+2026-01-31 19:01:36 -06:00: Scan progress: 0% (0/76)
+2026-01-31 19:01:38 -06:00: Scan progress: 26% (20/76)
+2026-01-31 19:01:40 -06:00: Scan progress: 53% (40/76)
+2026-01-31 19:01:41 -06:00: Scan progress: 79% (60/76)
+2026-01-31 19:01:41 -06:00: Scan complete: 76 new, 0 updated in 6612ms
+2026-01-31 19:01:41 -06:00: Warehouse directory does not exist: /mnt/d/models
+2026-01-31 19:01:41 -06:00:  POST /api/trpc/models.scan?batch=1 200 in 6.7s (compile: 49ms, render: 6.6s)
+2026-01-31 19:01:41 -06:00:  GET /api/trpc/models.list,models.stats?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22search%22%3Anull%2C%22location%22%3Anull%2C%22type%22%3Anull%2C%22limit%22%3A500%7D%2C%22meta%22%3A%7B%22values%22%3A%7B%22search%22%3A%5B%22undefined%22%5D%2C%22location%22%3A%5B%22undefined%22%5D%2C%22type%22%3A%5B%22undefined%22%5D%7D%2C%22v%22%3A1%7D%7D%2C%221%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%7D 200 in 42ms (compile: 11ms, render: 30ms)
+2026-01-31 19:02:38 -06:00:  GET /settings 200 in 69ms (compile: 39ms, render: 29ms)
+2026-01-31 19:02:38 -06:00:  GET /downloads 200 in 123ms (compile: 39ms, render: 84ms)
+2026-01-31 19:02:38 -06:00:  GET /downloads 200 in 124ms (compile: 97ms, render: 27ms)
+2026-01-31 19:02:38 -06:00:  GET /downloads 200 in 101ms (compile: 34ms, render: 67ms)
+2026-01-31 19:02:38 -06:00:  GET /models 200 in 95ms (compile: 28ms, render: 68ms)
+2026-01-31 19:02:39 -06:00:  GET /models 200 in 141ms (compile: 71ms, render: 69ms)
+2026-01-31 19:02:39 -06:00:  GET /models 200 in 99ms (compile: 30ms, render: 69ms)
+2026-01-31 19:02:39 -06:00:  GET /workflows 200 in 141ms (compile: 75ms, render: 66ms)
+2026-01-31 19:02:39 -06:00:  GET /workflows 200 in 94ms (compile: 29ms, render: 65ms)
+2026-01-31 19:02:39 -06:00:  GET /workflows 200 in 130ms (compile: 72ms, render: 59ms)
+2026-01-31 19:02:39 -06:00:  GET / 200 in 83ms (compile: 24ms, render: 59ms)
+2026-01-31 19:02:39 -06:00:  GET / 200 in 83ms (compile: 62ms, render: 21ms)
+2026-01-31 19:02:44 -06:00:  GET /api/trpc/workflows.list,workflows.stats?batch=1&input=%7B%220%22%3A%7B%22json%22%3A%7B%22search%22%3Anull%2C%22status%22%3Anull%7D%2C%22meta%22%3A%7B%22values%22%3A%7B%22search%22%3A%5B%22undefined%22%5D%2C%22status%22%3A%5B%22undefined%22%5D%7D%2C%22v%22%3A1%7D%7D%2C%221%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%7D 200 in 112ms (compile: 88ms, render: 24ms)
