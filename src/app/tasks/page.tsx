@@ -289,9 +289,5 @@ function TasksContent() {
 }
 
 export default function TasksPage() {
-  return (
-    <Suspense fallback={<div className="flex h-screen"><div className="flex-1" /></div>}>
-      <TasksContent />
-    </Suspense>
-  );
+  return <TasksContent />;
 }

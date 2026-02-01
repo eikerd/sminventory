@@ -1,6 +1,5 @@
-FIST OFF API KEYS
-
-
+# ⚠️ SECRETS REMOVED - Store in .env.local instead
+# Never commit API keys to version control!
 Why I added these specific folders:
 
 
@@ -89,7 +88,6 @@ models/controlnet/
     ├── SparseCtrl/           <-- For AnimateDiff (SD1.5). Controls camera motion.
     ├── Advanced_SVD/         <-- For Stable Video Diffusion controls
     └── Motion_Director/      <-- For steering video generation
-
 
 
 
@@ -363,5 +361,4 @@ If you are using Stability Matrix, it might try to manage these for you. However
 2. CLIP (Text): Dump them in the root, but keep filenames distinct (t5, clip_l, clip_g).
 
 3. CLIP Vision: Create SDXL and Flux folders. This is vital for maintaining your sanity when doing Face ID work.
-
 

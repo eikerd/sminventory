@@ -48,6 +48,7 @@ next-env.d.ts
 /test-results/
 /screenshots/
 /data/sminventory.db*
+/logs/
 prove.js
 shot.sh
 server-status.js
@@ -57,3 +58,6 @@ test-visual-simple.js
 scrape-t3.js
 scrape-t3-chat.js
 t3chat.txt
+
+# PM2
+.pm2/
