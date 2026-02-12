@@ -10,11 +10,13 @@ import {
   Download,
   Settings,
   Package,
+  Video,
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Workflows", href: "/workflows", icon: Layers },
+  { name: "Videos", href: "/videos", icon: Video },
   { name: "Models", href: "/models", icon: HardDrive },
   { name: "Downloads", href: "/downloads", icon: Download },
   { name: "Settings", href: "/settings", icon: Settings },

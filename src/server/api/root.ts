@@ -4,6 +4,7 @@ import { workflowsRouter } from "./routers/workflows";
 import { civitaiRouter } from "./routers/civitai";
 import { tasksRouter } from "./routers/tasks";
 import { downloadsRouter } from "./routers/downloads";
+import { videosRouter } from "./routers/videos";
 
 /**
  * This is the primary router for your server.
@@ -14,6 +15,7 @@ export const appRouter = router({
   civitai: civitaiRouter,
   tasks: tasksRouter,
   downloads: downloadsRouter,
+  videos: videosRouter,
 });
 
 // Export type definition of API
