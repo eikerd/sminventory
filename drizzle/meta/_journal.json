@@ -15,6 +15,13 @@
       "when": 1770912672698,
       "tag": "0001_freezing_betty_brant",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1770914767927,
+      "tag": "0002_busy_katie_power",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -19,7 +19,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -189,6 +188,13 @@ export default function VideoDetailPage({
     onError: (e) => toast.error(e.message),
   });
 
+  // Sync cloudRenderUrl from video data
+  useEffect(() => {
+    if (videoQuery.data?.video && !cloudRenderDirty) {
+      setCloudRenderUrl(videoQuery.data.video.cloudRenderUrl || "");
+    }
+  }, [videoQuery.data?.video.cloudRenderUrl, cloudRenderDirty, videoQuery.data?.video]);
+
   // Loading state
   if (videoQuery.isLoading) {
     return (
@@ -224,11 +230,6 @@ export default function VideoDetailPage({
   }
 
   const { video, workflows: linkedWorkflows, tags, urls } = data;
-
-  // Initialize cloud render URL from video data (only once)
-  if (!cloudRenderDirty && cloudRenderUrl !== (video.cloudRenderUrl || "")) {
-    setCloudRenderUrl(video.cloudRenderUrl || "");
-  }
 
   const modelTypeTags = tags.filter(
     (t) => t.category === VIDEO_TAG_CATEGORIES.MODEL_TYPE
@@ -295,7 +296,10 @@ export default function VideoDetailPage({
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              onClick={() => window.open(video.url, "_blank")}
+              onClick={() => {
+                const win = window.open(video.url, "_blank", "noopener,noreferrer");
+                if (win) win.opener = null;
+              }}
             >
               <ExternalLink className="mr-2 h-4 w-4" />
               YouTube
@@ -719,7 +723,7 @@ export default function VideoDetailPage({
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 text-destructive hover:text-destructive shrink-0"
-                            onClick={() => removeUrl.mutate({ urlId: u.id! })}
+                            onClick={() => u.id && removeUrl.mutate({ urlId: u.id })}
                           >
                             <X className="h-3 w-3" />
                           </Button>

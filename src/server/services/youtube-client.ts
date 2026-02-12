@@ -101,7 +101,13 @@ export async function fetchVideoDetails(
   try {
     const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=${key}`;
     const response = await fetch(url);
-    if (!response.ok) return null;
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => "Unable to read error body");
+      console.warn(
+        `YouTube Data API failed (${response.status}): ${errorBody.slice(0, 200)}. Falling back to oEmbed.`
+      );
+      return null;
+    }
     const data = await response.json();
     const item = data.items?.[0];
     if (!item) return null;

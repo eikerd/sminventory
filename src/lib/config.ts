@@ -162,18 +162,19 @@ export const BASE_MODELS = [
 ] as const;
 
 // Map internal architecture codes to CivitAI base model display names
+// Note: Returns values from BASE_MODELS constant or "Other" for unmapped architectures
 export function mapArchitectureToBaseModel(arch: string): string | null {
   const map: Record<string, string> = {
     "SD15": "SD 1.5",
     "SD20": "SD 2.0",
     "SD21": "SD 2.1",
     "SDXL": "SDXL 1.0",
-    "SD3": "SD 3",
+    "SD3": "Other", // SD 3 not in taxonomy yet, map to Other
     "Flux": "Flux .1 D",
     "Pony": "Pony",
     "Wan": "Wan Video 14B t2v",
-    "SVD": "SVD",
-    "Cascade": "Stable Cascade",
+    "SVD": "Other", // SVD not in taxonomy yet, map to Other
+    "Cascade": "Other", // Stable Cascade not in taxonomy yet, map to Other
     "Hunyuan": "Hunyuan 1",
     "Illustrious": "Illustrious",
     "Kolors": "Kolors",
@@ -183,7 +184,7 @@ export function mapArchitectureToBaseModel(arch: string): string | null {
     "Lumina": "Lumina",
     "PixArt": "PixArt α",
   };
-  return map[arch] || null;
+  return map[arch] || "Other";
 }
 
 // Map internal model type codes to CivitAI display names

@@ -16,7 +16,6 @@ import { v4 as uuidv4 } from "uuid";
 import {
   scrapeVideoMetadata,
   extractVideoId,
-  parseDescriptionUrls,
 } from "@/server/services/youtube-client";
 import {
   VIDEO_TAG_CATEGORIES,
@@ -181,11 +180,6 @@ export const videosRouter = router({
 
       // Tag filter - use subquery
       if (filters.tags && filters.tags.length > 0) {
-        const videoIdsWithTags = db
-          .select({ videoId: videoTags.videoId })
-          .from(videoTags)
-          .where(inArray(videoTags.value, filters.tags));
-
         conditions.push(
           inArray(videos.id, sql`(SELECT ${videoTags.videoId} FROM ${videoTags} WHERE ${inArray(videoTags.value, filters.tags)})`)
         );
@@ -207,25 +201,47 @@ export const videosRouter = router({
         .offset(offset)
         .all();
 
-      // Enrich with tag and workflow counts
-      const enriched = paged.map((video) => {
-        const tags = db
-          .select()
-          .from(videoTags)
-          .where(eq(videoTags.videoId, video.id))
-          .all();
-        const workflowCount = db
-          .select({ count: sql<number>`count(*)` })
-          .from(videoWorkflows)
-          .where(eq(videoWorkflows.videoId, video.id))
-          .get();
+      // Fetch tags and workflow counts in bulk to avoid N+1
+      const videoIds = paged.map(v => v.id);
 
-        return {
-          ...video,
-          tags,
-          workflowCount: workflowCount?.count || 0,
-        };
+      // Get all tags for these videos in one query
+      const allTags = videoIds.length > 0
+        ? db.select().from(videoTags).where(inArray(videoTags.videoId, videoIds)).all()
+        : [];
+
+      // Get workflow counts for these videos in one query
+      const workflowCounts = videoIds.length > 0
+        ? db
+            .select({
+              videoId: videoWorkflows.videoId,
+              count: sql<number>`count(*)`,
+            })
+            .from(videoWorkflows)
+            .where(inArray(videoWorkflows.videoId, videoIds))
+            .groupBy(videoWorkflows.videoId)
+            .all()
+        : [];
+
+      // Build lookup maps
+      const tagsByVideoId = new Map<string, typeof allTags>();
+      allTags.forEach(tag => {
+        if (!tagsByVideoId.has(tag.videoId)) {
+          tagsByVideoId.set(tag.videoId, []);
+        }
+        tagsByVideoId.get(tag.videoId)!.push(tag);
       });
+
+      const workflowCountByVideoId = new Map<string, number>();
+      workflowCounts.forEach(wc => {
+        workflowCountByVideoId.set(wc.videoId, wc.count);
+      });
+
+      // Enrich videos with tags and counts
+      const enriched = paged.map((video) => ({
+        ...video,
+        tags: tagsByVideoId.get(video.id) || [],
+        workflowCount: workflowCountByVideoId.get(video.id) || 0,
+      }));
 
       return { videos: enriched, total, limit, offset };
     }),
@@ -241,24 +257,27 @@ export const videosRouter = router({
 
       if (!video) return null;
 
-      // Get associated workflows with their details
+      // Get associated workflows with their details (avoid N+1)
       const links = db
         .select()
         .from(videoWorkflows)
         .where(eq(videoWorkflows.videoId, input.id))
         .all();
 
-      const linkedWorkflows = links.map((link) => {
-        const workflow = db
-          .select()
-          .from(workflows)
-          .where(eq(workflows.id, link.workflowId))
-          .get();
-        return {
-          ...link,
-          workflow,
-        };
-      });
+      // Fetch all workflows in one query
+      const workflowIds = links.map(l => l.workflowId);
+      const workflowsData = workflowIds.length > 0
+        ? db.select().from(workflows).where(inArray(workflows.id, workflowIds)).all()
+        : [];
+
+      // Build lookup map
+      const workflowById = new Map(workflowsData.map(w => [w.id, w]));
+
+      // Merge links with workflow data
+      const linkedWorkflows = links.map((link) => ({
+        ...link,
+        workflow: workflowById.get(link.workflowId),
+      }));
 
       // Get tags
       const tags = db
@@ -486,8 +505,8 @@ export const videosRouter = router({
     .input(
       z.object({
         videoId: z.string(),
-        category: z.string(),
-        value: z.string(),
+        category: z.enum(["model_type", "base_model", "custom"]),
+        value: z.string().trim().min(1).max(100),
       })
     )
     .mutation(({ input }) => {

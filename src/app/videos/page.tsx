@@ -336,9 +336,10 @@ export default function VideosPage() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8"
-                                onClick={() =>
-                                  window.open(video.url, "_blank")
-                                }
+                                onClick={() => {
+                                  const win = window.open(video.url, "_blank", "noopener,noreferrer");
+                                  if (win) win.opener = null;
+                                }}
                               >
                                 <ExternalLink className="h-4 w-4" />
                               </Button>

@@ -251,6 +251,7 @@ export const videos = sqliteTable("videos", {
   updatedAt: text("updated_at").default("CURRENT_TIMESTAMP"),
 }, (table) => [
   index("idx_videos_channel").on(table.channelName),
+  uniqueIndex("idx_videos_url_unique").on(table.url),
 ]);
 
 // ═══════════════════════════════════════════════════════════════════
@@ -265,6 +266,7 @@ export const videoWorkflows = sqliteTable("video_workflows", {
 }, (table) => [
   index("idx_video_workflows_video").on(table.videoId),
   index("idx_video_workflows_workflow").on(table.workflowId),
+  uniqueIndex("idx_video_workflows_unique").on(table.videoId, table.workflowId),
 ]);
 
 // ═══════════════════════════════════════════════════════════════════
