@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -44,7 +44,10 @@ import {
   Cloud,
   Loader2,
   Search,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
+import { WorkflowDependencyViewer } from "@/components/workflow-dependency-viewer";
 import { toast } from "sonner";
 import {
   VIDEO_TAG_CATEGORIES,
@@ -105,21 +108,32 @@ export default function VideoDetailPage({
   // State
   const [cloudRenderUrl, setCloudRenderUrl] = useState("");
   const [cloudRenderDirty, setCloudRenderDirty] = useState(false);
-  const [addWorkflowOpen, setAddWorkflowOpen] = useState(false);
-  const [workflowSearch, setWorkflowSearch] = useState("");
   const [addUrlInput, setAddUrlInput] = useState("");
   const [addUrlLabel, setAddUrlLabel] = useState("");
   const [addTagCategory, setAddTagCategory] = useState<string>(
     VIDEO_TAG_CATEGORIES.MODEL_TYPE
   );
   const [addTagValue, setAddTagValue] = useState("");
+  const [expandedWorkflows, setExpandedWorkflows] = useState<Set<string>>(new Set());
+
+  // File input ref for workflow upload
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Toggle workflow expansion
+  const toggleWorkflow = (workflowId: string) => {
+    setExpandedWorkflows((prev) => {
+      const next = new Set(prev);
+      if (next.has(workflowId)) {
+        next.delete(workflowId);
+      } else {
+        next.add(workflowId);
+      }
+      return next;
+    });
+  };
 
   // Queries
   const videoQuery = trpc.videos.get.useQuery({ id });
-  const workflowsQuery = trpc.workflows.list.useQuery(
-    { search: workflowSearch || undefined },
-    { enabled: addWorkflowOpen }
-  );
 
   // Mutations
   const updateVideo = trpc.videos.update.useMutation({
@@ -139,10 +153,9 @@ export default function VideoDetailPage({
     onError: (e) => toast.error(e.message),
   });
 
-  const addWorkflow = trpc.videos.addWorkflow.useMutation({
+  const uploadWorkflow = trpc.videos.uploadWorkflow.useMutation({
     onSuccess: () => {
-      toast.success("Workflow linked");
-      setAddWorkflowOpen(false);
+      toast.success("Workflow uploaded and added");
       videoQuery.refetch();
     },
     onError: (e) => toast.error(e.message),
@@ -188,6 +201,46 @@ export default function VideoDetailPage({
     },
     onError: (e) => toast.error(e.message),
   });
+
+  // Handle workflow file upload
+  const handleWorkflowFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file extension
+    if (!file.name.endsWith('.json')) {
+      toast.error('Please select a .json workflow file');
+      return;
+    }
+
+    // Read file content
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const content = event.target?.result as string;
+
+      try {
+        // Upload workflow
+        await uploadWorkflow.mutateAsync({
+          videoId: id,
+          filename: file.name,
+          content,
+        });
+
+        // Clear file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      } catch (error) {
+        // Error already handled by mutation onError
+      }
+    };
+
+    reader.onerror = () => {
+      toast.error('Failed to read file');
+    };
+
+    reader.readAsText(file);
+  };
 
   // Sync cloudRenderUrl from video data
   useEffect(() => {
@@ -258,14 +311,6 @@ export default function VideoDetailPage({
   );
   const availableTagOptions = tagOptions.filter(
     (t) => !existingTagValues.has(t)
-  );
-
-  // Get available workflows (not already linked)
-  const linkedWorkflowIds = new Set(
-    linkedWorkflows.map((lw) => lw.workflowId)
-  );
-  const availableWorkflows = (workflowsQuery.data?.workflows || []).filter(
-    (w) => !linkedWorkflowIds.has(w.id)
   );
 
   return (
@@ -385,295 +430,140 @@ export default function VideoDetailPage({
                   </div>
                 </CardContent>
               </Card>
-            </div>
 
-            {/* Right column: Workflows, Tags, URLs, Description */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Associated Workflows */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-sm">
-                      <Layers className="h-4 w-4" />
-                      Associated Workflows
-                      <Badge variant="secondary" className="ml-2">
-                        {linkedWorkflows.length}
-                      </Badge>
-                    </CardTitle>
-
-                    <Dialog
-                      open={addWorkflowOpen}
-                      onOpenChange={setAddWorkflowOpen}
-                    >
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <Plus className="mr-1 h-3 w-3" />
-                          Link Workflow
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Link Workflow</DialogTitle>
-                          <DialogDescription>
-                            Select a workflow to associate with this video. Tags
-                            will be auto-derived from its dependencies.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-3 py-4">
-                          <div className="relative">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                              placeholder="Search workflows..."
-                              value={workflowSearch}
-                              onChange={(e) =>
-                                setWorkflowSearch(e.target.value)
-                              }
-                              className="pl-10"
-                            />
-                          </div>
-                          <div className="max-h-64 overflow-auto space-y-1">
-                            {workflowsQuery.isLoading ? (
-                              <div className="p-4 text-center text-sm text-muted-foreground">
-                                Loading...
-                              </div>
-                            ) : availableWorkflows.length === 0 ? (
-                              <div className="p-4 text-center text-sm text-muted-foreground">
-                                No workflows found
-                              </div>
-                            ) : (
-                              availableWorkflows.map((wf) => (
-                                <button
-                                  key={wf.id}
-                                  type="button"
-                                  className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-accent text-left"
-                                  onClick={() =>
-                                    addWorkflow.mutate({
-                                      videoId: id,
-                                      workflowId: wf.id,
-                                    })
-                                  }
-                                  disabled={addWorkflow.isPending}
-                                >
-                                  <div>
-                                    <p className="font-medium">
-                                      {wf.name || wf.filename}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {wf.totalDependencies} deps ·{" "}
-                                      {wf.status}
-                                    </p>
-                                  </div>
-                                  <Plus className="h-4 w-4 text-muted-foreground" />
-                                </button>
-                              ))
-                            )}
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {linkedWorkflows.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      No workflows linked. Click &quot;Link Workflow&quot; to
-                      associate workflows and auto-generate tags.
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {linkedWorkflows.map((lw) => (
-                        <div
-                          key={lw.id}
-                          className="flex items-center justify-between rounded-lg border px-3 py-2"
-                        >
-                          <button
-                            type="button"
-                            className="flex-1 text-left text-sm font-medium hover:underline"
-                            onClick={() =>
-                              router.push(`/workflows/${lw.workflowId}`)
-                            }
-                          >
-                            {lw.workflow?.name ||
-                              lw.workflow?.filename ||
-                              lw.workflowId}
-                            {lw.workflow?.status && (
-                              <span className="ml-2 text-xs text-muted-foreground">
-                                ({lw.workflow.status})
-                              </span>
-                            )}
-                          </button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-destructive hover:text-destructive"
-                            onClick={() =>
-                              removeWorkflow.mutate({
-                                videoId: id,
-                                workflowId: lw.workflowId,
-                              })
-                            }
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Tags */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-sm">
-                    <Tag className="h-4 w-4" />
-                    Tags
-                    <Badge variant="secondary" className="ml-2">
-                      {tags.length}
-                    </Badge>
-                  </CardTitle>
-                  <CardDescription>
-                    CivitAI taxonomy tags. Auto-derived from workflows or
-                    manually added.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Model Types */}
-                  {modelTypeTags.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
-                        Model Types
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {modelTypeTags.map((tag) => (
-                          <TagBadge
-                            key={tag.id}
-                            category={tag.category}
-                            value={tag.value}
-                            source={tag.source}
-                            onRemove={() =>
-                              tag.id && removeTag.mutate({ tagId: tag.id })
-                            }
-                          />
-                        ))}
+              {/* Statistics */}
+              {(video.viewCount !== null || video.likeCount !== null || video.commentCount !== null) && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Statistics</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {video.viewCount !== null && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Views</span>
+                        <span className="font-medium">{video.viewCount.toLocaleString()}</span>
                       </div>
-                    </div>
-                  )}
-
-                  {/* Base Models */}
-                  {baseModelTags.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
-                        Base Models
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {baseModelTags.map((tag) => (
-                          <TagBadge
-                            key={tag.id}
-                            category={tag.category}
-                            value={tag.value}
-                            source={tag.source}
-                            onRemove={() =>
-                              tag.id && removeTag.mutate({ tagId: tag.id })
-                            }
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Custom Tags */}
-                  {customTags.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
-                        Custom
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {customTags.map((tag) => (
-                          <TagBadge
-                            key={tag.id}
-                            category={tag.category}
-                            value={tag.value}
-                            source={tag.source}
-                            onRemove={() =>
-                              tag.id && removeTag.mutate({ tagId: tag.id })
-                            }
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {tags.length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      No tags yet. Link a workflow to auto-generate tags, or add
-                      manually below.
-                    </p>
-                  )}
-
-                  {/* Add tag */}
-                  <div className="flex items-center gap-2 pt-2 border-t">
-                    <Select
-                      value={addTagCategory}
-                      onValueChange={setAddTagCategory}
-                    >
-                      <SelectTrigger className="w-36">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={VIDEO_TAG_CATEGORIES.MODEL_TYPE}>
-                          Model Type
-                        </SelectItem>
-                        <SelectItem value={VIDEO_TAG_CATEGORIES.BASE_MODEL}>
-                          Base Model
-                        </SelectItem>
-                        <SelectItem value={VIDEO_TAG_CATEGORIES.CUSTOM}>
-                          Custom
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    {addTagCategory === VIDEO_TAG_CATEGORIES.CUSTOM ? (
-                      <Input
-                        placeholder="Custom tag value"
-                        value={addTagValue}
-                        onChange={(e) => setAddTagValue(e.target.value)}
-                        className="flex-1"
-                      />
-                    ) : (
-                      <Select
-                        value={addTagValue}
-                        onValueChange={setAddTagValue}
-                      >
-                        <SelectTrigger className="flex-1">
-                          <SelectValue placeholder="Select tag..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableTagOptions.map((opt) => (
-                            <SelectItem key={opt} value={opt}>
-                              {opt}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                     )}
+                    {video.likeCount !== null && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Likes</span>
+                        <span className="font-medium">{video.likeCount.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {video.commentCount !== null && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Comments</span>
+                        <span className="font-medium">{video.commentCount.toLocaleString()}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
-                    <Button
-                      size="sm"
-                      disabled={!addTagValue || addTag.isPending}
-                      onClick={() =>
-                        addTag.mutate({
-                          videoId: id,
-                          category: addTagCategory,
-                          value: addTagValue,
-                        })
-                      }
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Video Status */}
+              {(video.privacyStatus || video.license || video.uploadStatus) && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Status</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    {video.privacyStatus && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Privacy</span>
+                        <span className="font-medium capitalize">{video.privacyStatus}</span>
+                      </div>
+                    )}
+                    {video.license && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">License</span>
+                        <span className="font-medium">{video.license === 'youtube' ? 'Standard' : 'Creative Commons'}</span>
+                      </div>
+                    )}
+                    {video.uploadStatus && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Upload</span>
+                        <span className="font-medium capitalize">{video.uploadStatus}</span>
+                      </div>
+                    )}
+                    {video.embeddable !== null && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Embeddable</span>
+                        <span className="font-medium">{video.embeddable ? 'Yes' : 'No'}</span>
+                      </div>
+                    )}
+                    {video.madeForKids !== null && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Made for Kids</span>
+                        <span className="font-medium">{video.madeForKids ? 'Yes' : 'No'}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Technical Details */}
+              {(video.definition || video.dimension || video.projection || video.caption !== null) && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Technical Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    {video.definition && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Definition</span>
+                        <span className="font-medium uppercase">{video.definition}</span>
+                      </div>
+                    )}
+                    {video.dimension && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Dimension</span>
+                        <span className="font-medium uppercase">{video.dimension}</span>
+                      </div>
+                    )}
+                    {video.projection && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Projection</span>
+                        <span className="font-medium capitalize">{video.projection}</span>
+                      </div>
+                    )}
+                    {video.caption !== null && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Captions</span>
+                        <span className="font-medium">{video.caption ? 'Available' : 'None'}</span>
+                      </div>
+                    )}
+                    {video.licensedContent !== null && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Licensed Content</span>
+                        <span className="font-medium">{video.licensedContent ? 'Yes' : 'No'}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Recording Details */}
+              {(video.recordingDate || video.locationDescription) && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Recording Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    {video.recordingDate && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Recorded</span>
+                        <span className="font-medium">{new Date(video.recordingDate).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                    {video.locationDescription && (
+                      <div>
+                        <span className="text-muted-foreground">Location</span>
+                        <p className="font-medium mt-1">{video.locationDescription}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* URLs */}
               <Card>
@@ -707,26 +597,26 @@ export default function VideoDetailPage({
                               href={u.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm text-blue-400 hover:underline truncate block"
+                              className="text-sm font-medium text-primary hover:underline truncate block"
                             >
-                              {u.label || u.url}
+                              {u.url}
                             </a>
                             {u.label && (
-                              <p className="text-xs text-muted-foreground truncate">
-                                {u.url}
-                              </p>
+                              <span className="text-xs text-muted-foreground">
+                                {u.label}
+                              </span>
                             )}
-                            <span className="text-[10px] text-muted-foreground">
-                              {u.source === "scraped"
-                                ? "from description"
-                                : "manual"}
-                            </span>
+                            {u.source && (
+                              <span className="ml-2 text-xs text-muted-foreground">
+                                ({u.source})
+                              </span>
+                            )}
                           </div>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-destructive hover:text-destructive shrink-0"
-                            onClick={() => u.id && removeUrl.mutate({ urlId: u.id })}
+                            className="h-7 w-7 text-destructive hover:text-destructive flex-shrink-0"
+                            onClick={() => removeUrl.mutate({ id: u.id })}
                           >
                             <X className="h-3 w-3" />
                           </Button>
@@ -735,8 +625,7 @@ export default function VideoDetailPage({
                     </div>
                   )}
 
-                  {/* Add URL */}
-                  <div className="flex items-center gap-2 pt-2 border-t">
+                  <div className="flex gap-2 pt-2 border-t">
                     <Input
                       placeholder="URL"
                       value={addUrlInput}
@@ -747,20 +636,21 @@ export default function VideoDetailPage({
                       placeholder="Label (optional)"
                       value={addUrlLabel}
                       onChange={(e) => setAddUrlLabel(e.target.value)}
-                      className="w-40"
+                      className="flex-1"
                     />
                     <Button
-                      size="sm"
+                      size="icon"
                       disabled={!addUrlInput.trim() || addUrl.isPending}
-                      onClick={() =>
+                      onClick={() => {
+                        if (!addUrlInput.trim()) return;
                         addUrl.mutate({
                           videoId: id,
                           url: addUrlInput.trim(),
                           label: addUrlLabel.trim() || undefined,
-                        })
-                      }
+                        });
+                      }}
                     >
-                      <Plus className="h-3 w-3" />
+                      <Plus className="h-4 w-4" />
                     </Button>
                   </div>
                 </CardContent>
@@ -779,6 +669,331 @@ export default function VideoDetailPage({
                   </CardContent>
                 </Card>
               )}
+            </div>
+
+            {/* Right column: Workflow Info Only */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Associated Workflows */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-sm">
+                      <Layers className="h-4 w-4" />
+                      Associated Workflows
+                      <Badge variant="secondary" className="ml-2">
+                        {linkedWorkflows.length}
+                      </Badge>
+                    </CardTitle>
+
+                    <div className="flex gap-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".json"
+                        onChange={handleWorkflowFileChange}
+                        className="hidden"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadWorkflow.isPending}
+                      >
+                        {uploadWorkflow.isPending ? (
+                          <>
+                            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="mr-1 h-3 w-3" />
+                            Add Workflow
+                          </>
+                        )}
+                      </Button>
+                      {linkedWorkflows.length > 0 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            // Rescan all workflows for this video
+                            linkedWorkflows.forEach((lw) => {
+                              if (lw.workflow?.filepath) {
+                                // TODO: Add rescan mutation
+                                toast.success(`Rescanning ${lw.workflow.name || 'workflow'}...`);
+                              }
+                            });
+                          }}
+                        >
+                          <RefreshCw className="mr-1 h-3 w-3" />
+                          Rescan Workflows
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {linkedWorkflows.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No workflows attached. Click &quot;Add Workflow&quot; to
+                      upload a ComfyUI workflow file (.json) for this video.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {linkedWorkflows.map((lw) => {
+                        const isExpanded = expandedWorkflows.has(lw.workflowId);
+                        const workflow = lw.workflow;
+                        const deps = lw.dependencies || [];
+
+                        return (
+                          <div
+                            key={lw.id}
+                            className="rounded-lg border bg-card"
+                          >
+                            {/* Workflow Header */}
+                            <div className="flex items-center justify-between px-4 py-3">
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <button
+                                  type="button"
+                                  onClick={() => toggleWorkflow(lw.workflowId)}
+                                  className="flex-shrink-0 hover:bg-accent rounded p-0.5"
+                                >
+                                  {isExpanded ? (
+                                    <ChevronDown className="h-4 w-4" />
+                                  ) : (
+                                    <ChevronRight className="h-4 w-4" />
+                                  )}
+                                </button>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium text-sm truncate">
+                                      {workflow?.name ||
+                                        workflow?.filename ||
+                                        lw.workflowId}
+                                    </span>
+                                    {workflow?.status && (
+                                      <Badge variant="outline" className="text-xs">
+                                        {workflow.status}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  {workflow && (
+                                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                                      <span>{workflow.totalDependencies} dependencies</span>
+                                      {workflow.resolvedLocal > 0 && (
+                                        <span className="text-green-500">
+                                          {workflow.resolvedLocal} local
+                                        </span>
+                                      )}
+                                      {workflow.missingCount > 0 && (
+                                        <span className="text-red-500">
+                                          {workflow.missingCount} missing
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                {/* Only show Details if workflow is installed (not in video_workflows dir) */}
+                                {workflow?.filepath && !workflow.filepath.includes('video_workflows') && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() =>
+                                      router.push(`/workflows/${lw.workflowId}`)
+                                    }
+                                    className="h-8 text-xs"
+                                  >
+                                    Details
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive hover:text-destructive"
+                                  onClick={() =>
+                                    removeWorkflow.mutate({
+                                      videoId: id,
+                                      workflowId: lw.workflowId,
+                                    })
+                                  }
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Workflow Dependencies (Expandable) */}
+                            {isExpanded && workflow && (
+                              <div className="border-t px-4 py-3 bg-muted/20">
+                                <WorkflowDependencyViewer
+                                  workflow={workflow}
+                                  dependencies={deps}
+                                  compact={true}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Tags */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Tag className="h-4 w-4" />
+                    Tags
+                    <Badge variant="secondary" className="ml-2">
+                      {tags.length}
+                    </Badge>
+                  </CardTitle>
+                  <CardDescription>
+                    CivitAI taxonomy tags. Auto-derived from workflows or manually added.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Model Type Tags */}
+                  {modelTypeTags.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-2">
+                        Model Types
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {modelTypeTags.map((tag) => (
+                          <div key={tag.id} className="flex items-center gap-1">
+                            <Badge
+                              variant="secondary"
+                              className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30"
+                            >
+                              {tag.value}
+                              <span className="ml-1 text-[10px] opacity-60">(auto)</span>
+                            </Badge>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                removeTag.mutate({ videoId: id, tagId: tag.id })
+                              }
+                              className="hover:bg-destructive/20 rounded p-0.5"
+                            >
+                              <X className="h-3 w-3 text-destructive" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Base Model Tags */}
+                  {baseModelTags.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-2">
+                        Base Models
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {baseModelTags.map((tag) => (
+                          <div key={tag.id} className="flex items-center gap-1">
+                            <Badge
+                              variant="secondary"
+                              className="text-xs bg-purple-500/20 text-purple-400 border-purple-500/30"
+                            >
+                              {tag.value}
+                            </Badge>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                removeTag.mutate({ videoId: id, tagId: tag.id })
+                              }
+                              className="hover:bg-destructive/20 rounded p-0.5"
+                            >
+                              <X className="h-3 w-3 text-destructive" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Custom Tags */}
+                  {customTags.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-2">
+                        Custom
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {customTags.map((tag) => (
+                          <div key={tag.id} className="flex items-center gap-1">
+                            <Badge variant="secondary" className="text-xs">
+                              {tag.value}
+                            </Badge>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                removeTag.mutate({ videoId: id, tagId: tag.id })
+                              }
+                              className="hover:bg-destructive/20 rounded p-0.5"
+                            >
+                              <X className="h-3 w-3 text-destructive" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Add Tag Form */}
+                  <div className="flex gap-2">
+                    <Select
+                      value={addTagCategory}
+                      onValueChange={setAddTagCategory}
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue placeholder="Category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={VIDEO_TAG_CATEGORIES.MODEL_TYPE}>
+                          Model Type
+                        </SelectItem>
+                        <SelectItem value={VIDEO_TAG_CATEGORIES.BASE_MODEL}>
+                          Base Model
+                        </SelectItem>
+                        <SelectItem value={VIDEO_TAG_CATEGORIES.CUSTOM}>
+                          Custom
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={addTagValue} onValueChange={setAddTagValue}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Select tag..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tagOptions.map((opt) => (
+                          <SelectItem key={opt} value={opt}>
+                            {opt}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      size="icon"
+                      disabled={!addTagValue || addTag.isPending}
+                      onClick={() => {
+                        addTag.mutate({
+                          videoId: id,
+                          category: addTagCategory,
+                          value: addTagValue,
+                        });
+                      }}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </main>

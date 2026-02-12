@@ -317,8 +317,8 @@ function WorkflowsContent() {
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header
-          title="Workflows"
-          description="Manage and scan ComfyUI workflows"
+          title="Installed Workflows"
+          description="Manage and scan ComfyUI workflows from Stability Matrix"
           onScan={() => scanWorkflows.mutate()}
           scanning={scanWorkflows.isPending}
         />

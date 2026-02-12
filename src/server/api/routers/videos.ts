@@ -23,7 +23,11 @@ import {
   URL_SOURCE,
   mapArchitectureToBaseModel,
   mapModelTypeToDisplay,
+  CONFIG,
 } from "@/lib/config";
+import fs from "fs";
+import path from "path";
+import { parseWorkflowFile } from "@/server/services/workflow-parser";
 
 // ---------- Helpers ----------
 
@@ -291,10 +295,25 @@ export const videosRouter = router({
       // Build lookup map
       const workflowById = new Map(workflowsData.map(w => [w.id, w]));
 
-      // Merge links with workflow data
+      // Fetch dependencies for all workflows in one query
+      const dependencies = workflowIds.length > 0
+        ? db.select().from(workflowDependencies).where(inArray(workflowDependencies.workflowId, workflowIds)).all()
+        : [];
+
+      // Build dependencies lookup map
+      const depsByWorkflowId = new Map<string, typeof dependencies>();
+      dependencies.forEach(dep => {
+        if (!depsByWorkflowId.has(dep.workflowId)) {
+          depsByWorkflowId.set(dep.workflowId, []);
+        }
+        depsByWorkflowId.get(dep.workflowId)!.push(dep);
+      });
+
+      // Merge links with workflow data and dependencies
       const linkedWorkflows = links.map((link) => ({
         ...link,
         workflow: workflowById.get(link.workflowId),
+        dependencies: depsByWorkflowId.get(link.workflowId) || [],
       }));
 
       // Get tags
@@ -383,17 +402,42 @@ export const videosRouter = router({
       const id = uuidv4();
       const now = new Date().toISOString();
 
-      // Insert video record
+      // Insert video record with comprehensive metadata
       db.insert(videos)
         .values({
           id,
           url: input.url,
+          // Basic metadata
           title: metadata.title,
           description: metadata.description,
           channelName: metadata.channelName,
+          channelId: metadata.source === 'data_api' ? (metadata as any).channelId : null,
           publishedAt: metadata.publishedAt,
           thumbnailUrl: metadata.thumbnailUrl,
           duration: metadata.duration,
+          // Statistics
+          viewCount: metadata.source === 'data_api' ? (metadata as any).viewCount : null,
+          likeCount: metadata.source === 'data_api' ? (metadata as any).likeCount : null,
+          commentCount: metadata.source === 'data_api' ? (metadata as any).commentCount : null,
+          // Status
+          uploadStatus: metadata.source === 'data_api' ? (metadata as any).uploadStatus : null,
+          privacyStatus: metadata.source === 'data_api' ? (metadata as any).privacyStatus : null,
+          license: metadata.source === 'data_api' ? (metadata as any).license : null,
+          embeddable: metadata.source === 'data_api' ? ((metadata as any).embeddable ? 1 : 0) : null,
+          publicStatsViewable: metadata.source === 'data_api' ? ((metadata as any).publicStatsViewable ? 1 : 0) : null,
+          madeForKids: metadata.source === 'data_api' ? ((metadata as any).madeForKids ? 1 : 0) : null,
+          // Content details
+          dimension: metadata.source === 'data_api' ? (metadata as any).dimension : null,
+          definition: metadata.source === 'data_api' ? (metadata as any).definition : null,
+          caption: metadata.source === 'data_api' ? ((metadata as any).caption ? 1 : 0) : null,
+          licensedContent: metadata.source === 'data_api' ? ((metadata as any).licensedContent ? 1 : 0) : null,
+          projection: metadata.source === 'data_api' ? (metadata as any).projection : null,
+          // Topic details
+          topicCategories: metadata.source === 'data_api' ? JSON.stringify((metadata as any).topicCategories || []) : null,
+          // Recording details
+          recordingDate: metadata.source === 'data_api' ? (metadata as any).recordingDate : null,
+          locationDescription: metadata.source === 'data_api' ? (metadata as any).locationDescription : null,
+          // Timestamps
           createdAt: now,
           updatedAt: now,
         })
@@ -512,6 +556,82 @@ export const videosRouter = router({
         .all();
     }),
 
+  uploadWorkflow: publicProcedure
+    .input(
+      z.object({
+        videoId: z.string(),
+        filename: z.string(),
+        content: z.string(), // JSON content of the workflow file
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+      // Validate JSON
+      let workflowJson;
+      try {
+        workflowJson = JSON.parse(input.content);
+      } catch (e) {
+        throw new Error("Invalid JSON file");
+      }
+
+      // Create video-specific workflow directory
+      const videoWorkflowDir = path.join(
+        CONFIG.paths.videoWorkflows,
+        input.videoId
+      );
+      if (!fs.existsSync(videoWorkflowDir)) {
+        fs.mkdirSync(videoWorkflowDir, { recursive: true });
+      }
+
+      // Save workflow file
+      const filepath = path.join(videoWorkflowDir, input.filename);
+      fs.writeFileSync(filepath, input.content, "utf8");
+
+      // Parse workflow file to get workflow and dependencies data
+      const parsed = await parseWorkflowFile(filepath);
+
+      if (!parsed) {
+        throw new Error("Failed to parse workflow file");
+      }
+
+      const { workflow, dependencies } = parsed;
+      const now = new Date().toISOString();
+
+      // Insert workflow record with video-uploaded source
+      db.insert(workflows).values({
+        ...workflow,
+        source: "video-uploaded",
+        updatedAt: now,
+      }).run();
+
+      // Insert dependencies if any
+      if (dependencies.length > 0) {
+        db.insert(workflowDependencies).values(dependencies).run();
+      }
+
+      // Link workflow to video
+      db.insert(videoWorkflows)
+        .values({
+          videoId: input.videoId,
+          workflowId: workflow.id,
+          createdAt: now,
+        })
+        .run();
+
+      // Auto-tag from the uploaded workflow
+      deriveAutoTagsFromWorkflow(input.videoId, workflow.id);
+
+      return {
+        workflowId: workflow.id,
+        filepath,
+        dependencyCount: dependencies.length,
+      };
+      } catch (error) {
+        console.error("Upload workflow error:", error);
+        throw error;
+      }
+    }),
+
   removeWorkflow: publicProcedure
     .input(
       z.object({
@@ -618,12 +738,37 @@ export const videosRouter = router({
 
       db.update(videos)
         .set({
+          // Basic metadata
           title: metadata.title || video.title,
           description: metadata.description || video.description,
           channelName: metadata.channelName || video.channelName,
+          channelId: metadata.source === 'data_api' ? ((metadata as any).channelId || video.channelId) : video.channelId,
           publishedAt: metadata.publishedAt || video.publishedAt,
           thumbnailUrl: metadata.thumbnailUrl || video.thumbnailUrl,
           duration: metadata.duration || video.duration,
+          // Statistics
+          viewCount: metadata.source === 'data_api' ? (metadata as any).viewCount : video.viewCount,
+          likeCount: metadata.source === 'data_api' ? (metadata as any).likeCount : video.likeCount,
+          commentCount: metadata.source === 'data_api' ? (metadata as any).commentCount : video.commentCount,
+          // Status
+          uploadStatus: metadata.source === 'data_api' ? (metadata as any).uploadStatus : video.uploadStatus,
+          privacyStatus: metadata.source === 'data_api' ? (metadata as any).privacyStatus : video.privacyStatus,
+          license: metadata.source === 'data_api' ? (metadata as any).license : video.license,
+          embeddable: metadata.source === 'data_api' ? ((metadata as any).embeddable ? 1 : 0) : video.embeddable,
+          publicStatsViewable: metadata.source === 'data_api' ? ((metadata as any).publicStatsViewable ? 1 : 0) : video.publicStatsViewable,
+          madeForKids: metadata.source === 'data_api' ? ((metadata as any).madeForKids ? 1 : 0) : video.madeForKids,
+          // Content details
+          dimension: metadata.source === 'data_api' ? (metadata as any).dimension : video.dimension,
+          definition: metadata.source === 'data_api' ? (metadata as any).definition : video.definition,
+          caption: metadata.source === 'data_api' ? ((metadata as any).caption ? 1 : 0) : video.caption,
+          licensedContent: metadata.source === 'data_api' ? ((metadata as any).licensedContent ? 1 : 0) : video.licensedContent,
+          projection: metadata.source === 'data_api' ? (metadata as any).projection : video.projection,
+          // Topic details
+          topicCategories: metadata.source === 'data_api' ? JSON.stringify((metadata as any).topicCategories || []) : video.topicCategories,
+          // Recording details
+          recordingDate: metadata.source === 'data_api' ? (metadata as any).recordingDate : video.recordingDate,
+          locationDescription: metadata.source === 'data_api' ? (metadata as any).locationDescription : video.locationDescription,
+          // Timestamp
           updatedAt: now,
         })
         .where(eq(videos.id, input.id))

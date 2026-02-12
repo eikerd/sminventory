@@ -29,7 +29,6 @@ import {
   Video,
   ExternalLink,
   Trash2,
-  Eye,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -320,22 +319,6 @@ export default function VideosPage() {
                           onClick={(e) => e.stopPropagation()}
                           onKeyDown={(e) => e.stopPropagation()}
                         >
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() =>
-                                  router.push(`/videos/${video.id}`)
-                                }
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>View details</TooltipContent>
-                          </Tooltip>
-
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button

@@ -13,6 +13,7 @@ export const CONFIG = {
     ],
     warehouse: "/mnt/d/models", // Cloud warehouse with mirrored structure
     database: path.join(process.cwd(), "data", "sminventory.db"),
+    videoWorkflows: path.join(process.cwd(), "workflows", "video_workflows"), // Video-owned workflow archive
   },
   validation: {
     defaultLevel: "standard" as "quick" | "standard" | "full",
