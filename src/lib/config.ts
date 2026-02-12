@@ -153,7 +153,8 @@ export const BASE_MODELS = [
   "Illustrious", "Kolors", "LTXV", "LTXV2", "Lumina", "Mochi",
   "NoobAI", "Other", "PixArt α", "PixArt Σ", "Pony", "Pony V7",
   "Qwen", "SD 1.4", "SD 1.5", "SD 1.5 LCM", "SD 1.5 Hyper",
-  "SD 2.0", "SD 2.1", "SDXL 1.0", "SDXL Lightning", "SDXL Hyper",
+  "SD 2.0", "SD 2.1", "SD 3", "SDXL 1.0", "SDXL Lightning", "SDXL Hyper",
+  "Stable Cascade", "SVD",
   "Wan Video 1.3B t2v", "Wan Video 14B t2v",
   "Wan Video 14B i2v 480p", "Wan Video 14B i2v 720p",
   "Wan Video 2.2 TI2V-5B", "Wan Video 2.2 I2V-A14B",
@@ -169,12 +170,12 @@ export function mapArchitectureToBaseModel(arch: string): string | null {
     "SD20": "SD 2.0",
     "SD21": "SD 2.1",
     "SDXL": "SDXL 1.0",
-    "SD3": "Other", // SD 3 not in taxonomy yet, map to Other
+    "SD3": "SD 3",
     "Flux": "Flux .1 D",
     "Pony": "Pony",
     "Wan": "Wan Video 14B t2v",
-    "SVD": "Other", // SVD not in taxonomy yet, map to Other
-    "Cascade": "Other", // Stable Cascade not in taxonomy yet, map to Other
+    "SVD": "SVD",
+    "Cascade": "Stable Cascade",
     "Hunyuan": "Hunyuan 1",
     "Illustrious": "Illustrious",
     "Kolors": "Kolors",

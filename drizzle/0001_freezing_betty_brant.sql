@@ -1,3 +1,18 @@
+CREATE TABLE `videos` (
+	`id` text PRIMARY KEY NOT NULL,
+	`url` text NOT NULL,
+	`title` text,
+	`description` text,
+	`channel_name` text,
+	`published_at` text,
+	`thumbnail_url` text,
+	`duration` text,
+	`cloud_render_url` text,
+	`created_at` text DEFAULT 'CURRENT_TIMESTAMP',
+	`updated_at` text DEFAULT 'CURRENT_TIMESTAMP'
+);
+--> statement-breakpoint
+CREATE INDEX `idx_videos_channel` ON `videos` (`channel_name`);--> statement-breakpoint
 CREATE TABLE `video_tags` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`video_id` text NOT NULL,
@@ -33,19 +48,4 @@ CREATE TABLE `video_workflows` (
 );
 --> statement-breakpoint
 CREATE INDEX `idx_video_workflows_video` ON `video_workflows` (`video_id`);--> statement-breakpoint
-CREATE INDEX `idx_video_workflows_workflow` ON `video_workflows` (`workflow_id`);--> statement-breakpoint
-CREATE TABLE `videos` (
-	`id` text PRIMARY KEY NOT NULL,
-	`url` text NOT NULL,
-	`title` text,
-	`description` text,
-	`channel_name` text,
-	`published_at` text,
-	`thumbnail_url` text,
-	`duration` text,
-	`cloud_render_url` text,
-	`created_at` text DEFAULT 'CURRENT_TIMESTAMP',
-	`updated_at` text DEFAULT 'CURRENT_TIMESTAMP'
-);
---> statement-breakpoint
-CREATE INDEX `idx_videos_channel` ON `videos` (`channel_name`);
+CREATE INDEX `idx_video_workflows_workflow` ON `video_workflows` (`workflow_id`);

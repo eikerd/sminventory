@@ -30,6 +30,7 @@ import {
 /**
  * Derive auto-tags from a workflow's dependencies and apply to a video.
  * Uses onConflictDoNothing to avoid duplicates.
+ * Optimized with batch operations to reduce DB calls.
  */
 function deriveAutoTagsFromWorkflow(videoId: string, workflowId: string) {
   const deps = db
@@ -38,80 +39,97 @@ function deriveAutoTagsFromWorkflow(videoId: string, workflowId: string) {
     .where(eq(workflowDependencies.workflowId, workflowId))
     .all();
 
+  if (deps.length === 0) return;
+
+  // Batch fetch all resolved models at once
+  const resolvedModelIds = deps
+    .map((d) => d.resolvedModelId)
+    .filter((id): id is string => id !== null);
+
+  const resolvedModels = resolvedModelIds.length > 0
+    ? db
+        .select()
+        .from(models)
+        .where(inArray(models.id, resolvedModelIds))
+        .all()
+    : [];
+
+  const modelById = new Map(resolvedModels.map((m) => [m.id, m]));
+
+  // Build tag rows to insert
+  const tagRows: Array<{
+    videoId: string;
+    category: string;
+    value: string;
+    source: string;
+    createdAt: string;
+  }> = [];
+
+  const createdAt = new Date().toISOString();
+
   for (const dep of deps) {
     // Tag model type
     const displayType = mapModelTypeToDisplay(dep.modelType);
     if (displayType) {
-      db.insert(videoTags)
-        .values({
-          videoId,
-          category: VIDEO_TAG_CATEGORIES.MODEL_TYPE,
-          value: displayType,
-          source: TAG_SOURCE.AUTO,
-          createdAt: new Date().toISOString(),
-        })
-        .onConflictDoNothing()
-        .run();
+      tagRows.push({
+        videoId,
+        category: VIDEO_TAG_CATEGORIES.MODEL_TYPE,
+        value: displayType,
+        source: TAG_SOURCE.AUTO,
+        createdAt,
+      });
     }
 
     // Tag base model from expectedArchitecture
     if (dep.expectedArchitecture) {
       const baseModel = mapArchitectureToBaseModel(dep.expectedArchitecture);
       if (baseModel) {
-        db.insert(videoTags)
-          .values({
-            videoId,
-            category: VIDEO_TAG_CATEGORIES.BASE_MODEL,
-            value: baseModel,
-            source: TAG_SOURCE.AUTO,
-            createdAt: new Date().toISOString(),
-          })
-          .onConflictDoNothing()
-          .run();
+        tagRows.push({
+          videoId,
+          category: VIDEO_TAG_CATEGORIES.BASE_MODEL,
+          value: baseModel,
+          source: TAG_SOURCE.AUTO,
+          createdAt,
+        });
       }
     }
 
     // If resolved, use more specific info from the model record
     if (dep.resolvedModelId) {
-      const model = db
-        .select()
-        .from(models)
-        .where(eq(models.id, dep.resolvedModelId))
-        .get();
+      const model = modelById.get(dep.resolvedModelId);
 
       if (model) {
         // Use civitaiBaseModel for more specific base model tag
         if (model.civitaiBaseModel) {
-          db.insert(videoTags)
-            .values({
-              videoId,
-              category: VIDEO_TAG_CATEGORIES.BASE_MODEL,
-              value: model.civitaiBaseModel,
-              source: TAG_SOURCE.AUTO,
-              createdAt: new Date().toISOString(),
-            })
-            .onConflictDoNothing()
-            .run();
+          tagRows.push({
+            videoId,
+            category: VIDEO_TAG_CATEGORIES.BASE_MODEL,
+            value: model.civitaiBaseModel,
+            source: TAG_SOURCE.AUTO,
+            createdAt,
+          });
         }
 
         // Use detectedArchitecture if no expectedArchitecture
         if (!dep.expectedArchitecture && model.detectedArchitecture) {
           const baseModel = mapArchitectureToBaseModel(model.detectedArchitecture);
           if (baseModel) {
-            db.insert(videoTags)
-              .values({
-                videoId,
-                category: VIDEO_TAG_CATEGORIES.BASE_MODEL,
-                value: baseModel,
-                source: TAG_SOURCE.AUTO,
-                createdAt: new Date().toISOString(),
-              })
-              .onConflictDoNothing()
-              .run();
+            tagRows.push({
+              videoId,
+              category: VIDEO_TAG_CATEGORIES.BASE_MODEL,
+              value: baseModel,
+              source: TAG_SOURCE.AUTO,
+              createdAt,
+            });
           }
         }
       }
     }
+  }
+
+  // Bulk insert all tags in a single operation
+  if (tagRows.length > 0) {
+    db.insert(videoTags).values(tagRows).onConflictDoNothing().run();
   }
 }
 
@@ -297,21 +315,37 @@ export const videosRouter = router({
     }),
 
   stats: publicProcedure.query(() => {
-    const allVideos = db.select().from(videos).all();
-    const allTags = db.select().from(videoTags).all();
+    // Get total count using SQL aggregation
+    const totalResult = db
+      .select({ count: sql<number>`count(*)` })
+      .from(videos)
+      .get();
+    const total = totalResult?.count || 0;
 
+    // Get tag counts using SQL GROUP BY
+    const tagCounts = db
+      .select({
+        category: videoTags.category,
+        value: videoTags.value,
+        count: sql<number>`count(*)`,
+      })
+      .from(videoTags)
+      .groupBy(videoTags.category, videoTags.value)
+      .all();
+
+    // Organize results by category
     const byModelType: Record<string, number> = {};
     const byBaseModel: Record<string, number> = {};
 
-    for (const tag of allTags) {
-      if (tag.category === VIDEO_TAG_CATEGORIES.MODEL_TYPE) {
-        byModelType[tag.value] = (byModelType[tag.value] || 0) + 1;
-      } else if (tag.category === VIDEO_TAG_CATEGORIES.BASE_MODEL) {
-        byBaseModel[tag.value] = (byBaseModel[tag.value] || 0) + 1;
+    for (const row of tagCounts) {
+      if (row.category === VIDEO_TAG_CATEGORIES.MODEL_TYPE) {
+        byModelType[row.value] = row.count;
+      } else if (row.category === VIDEO_TAG_CATEGORIES.BASE_MODEL) {
+        byBaseModel[row.value] = row.count;
       }
     }
 
-    return { total: allVideos.length, byModelType, byBaseModel };
+    return { total, byModelType, byBaseModel };
   }),
 
   hasGoogleApiKey: publicProcedure.query(() => {
@@ -539,7 +573,7 @@ export const videosRouter = router({
     .input(
       z.object({
         videoId: z.string(),
-        url: z.string(),
+        url: z.string().url(),
         label: z.string().optional(),
       })
     )
@@ -621,6 +655,13 @@ export const videosRouter = router({
       return db.select().from(videos).where(eq(videos.id, input.id)).get();
     }),
 
+  // Save Google API key to settings
+  // Note: API key is stored unencrypted (encrypted: 0) because:
+  // 1. This is a local desktop application with file-system-level security
+  // 2. The database file is stored locally and protected by OS permissions
+  // 3. Encryption would require a master key stored elsewhere, providing minimal additional security
+  // 4. Users should protect their system with appropriate authentication/encryption at the OS level
+  // For cloud-hosted or multi-user deployments, implement proper encryption with a secure key management system.
   saveGoogleApiKey: publicProcedure
     .input(z.object({ apiKey: z.string() }))
     .mutation(({ input }) => {
@@ -628,7 +669,7 @@ export const videosRouter = router({
         .values({
           key: "google_api_key",
           value: input.apiKey,
-          encrypted: 0,
+          encrypted: 0, // See comment above for rationale
           updatedAt: new Date().toISOString(),
         })
         .onConflictDoUpdate({

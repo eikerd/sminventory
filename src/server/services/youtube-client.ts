@@ -70,7 +70,7 @@ export function extractVideoId(url: string): string | null {
 
 // ---------- API Key ----------
 
-async function getGoogleApiKey(): Promise<string | null> {
+function getGoogleApiKey(): string | null {
   const setting = db.select().from(settings).where(eq(settings.key, "google_api_key")).get();
   return setting?.value || process.env.GOOGLE_API_KEY || null;
 }
@@ -82,7 +82,7 @@ export async function fetchOEmbed(url: string): Promise<OEmbedResult | null> {
     const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
     const response = await fetch(oembedUrl);
     if (!response.ok) return null;
-    return response.json();
+    return await response.json();
   } catch (error) {
     console.error("YouTube oEmbed fetch failed:", error);
     return null;
@@ -95,7 +95,7 @@ export async function fetchVideoDetails(
   videoId: string,
   apiKey?: string
 ): Promise<YouTubeVideoDetails | null> {
-  const key = apiKey || await getGoogleApiKey();
+  const key = apiKey || getGoogleApiKey();
   if (!key) return null;
 
   try {
@@ -133,11 +133,34 @@ export async function fetchVideoDetails(
 
 // ---------- URL parsing ----------
 
+// Trusted domains for model/resource URLs
+const TRUSTED_DOMAINS = [
+  'civitai.com',
+  'huggingface.co',
+  'github.com',
+  'patreon.com',
+  'ko-fi.com',
+  'buymeacoffee.com',
+  'discord.gg',
+  'discord.com',
+];
+
+function isTrustedUrl(url: string): boolean {
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname.toLowerCase().replace(/^www\./, '');
+    return TRUSTED_DOMAINS.some(domain => hostname === domain || hostname.endsWith('.' + domain));
+  } catch {
+    return false;
+  }
+}
+
 export function parseDescriptionUrls(description: string): string[] {
   const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/g;
   const matches = description.match(urlRegex) || [];
-  // Deduplicate and clean trailing punctuation
-  return [...new Set(matches.map(u => u.replace(/[.,;:!?)]+$/, "")))];
+  // Deduplicate, clean trailing punctuation, and filter to trusted domains only
+  const cleaned = matches.map(u => u.replace(/[.,;:!?)]+$/, ""));
+  return [...new Set(cleaned)].filter(isTrustedUrl);
 }
 
 // ---------- Combined scrape function ----------

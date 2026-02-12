@@ -142,10 +142,11 @@ export default function SettingsPage() {
               <Separator />
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Google API Key (YouTube Data API)</label>
+                <label htmlFor="google-api-key" className="text-sm font-medium">Google API Key (YouTube Data API)</label>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <Input
+                      id="google-api-key"
                       type={showGoogleKey ? "text" : "password"}
                       placeholder="Enter your Google API key"
                       value={googleKey}

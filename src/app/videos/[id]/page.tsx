@@ -80,6 +80,7 @@ function TagBadge({
       )}
       {onRemove && (
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onRemove();
@@ -443,6 +444,7 @@ export default function VideoDetailPage({
                               availableWorkflows.map((wf) => (
                                 <button
                                   key={wf.id}
+                                  type="button"
                                   className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-accent text-left"
                                   onClick={() =>
                                     addWorkflow.mutate({
@@ -485,6 +487,7 @@ export default function VideoDetailPage({
                           className="flex items-center justify-between rounded-lg border px-3 py-2"
                         >
                           <button
+                            type="button"
                             className="flex-1 text-left text-sm font-medium hover:underline"
                             onClick={() =>
                               router.push(`/workflows/${lw.workflowId}`)

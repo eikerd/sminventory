@@ -73,6 +73,8 @@ export default function VideosPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newUrl, setNewUrl] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [videoToDelete, setVideoToDelete] = useState<string | null>(null);
 
   const videosQuery = trpc.videos.list.useQuery({
     search: searchQuery || undefined,
@@ -144,8 +146,9 @@ export default function VideosPage() {
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">YouTube URL</label>
+                  <label htmlFor="youtube-url-input" className="text-sm font-medium">YouTube URL</label>
                   <Input
+                    id="youtube-url-input"
                     placeholder="https://www.youtube.com/watch?v=..."
                     value={newUrl}
                     onChange={(e) => setNewUrl(e.target.value)}
@@ -312,7 +315,10 @@ export default function VideosPage() {
                       <td className="px-6 py-3 text-right">
                         <div
                           className="flex items-center justify-end gap-1"
+                          role="group"
+                          aria-label="Video actions"
                           onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
                         >
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -353,9 +359,10 @@ export default function VideosPage() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 text-destructive hover:text-destructive"
-                                onClick={() =>
-                                  deleteVideo.mutate({ id: video.id })
-                                }
+                                onClick={() => {
+                                  setVideoToDelete(video.id);
+                                  setDeleteDialogOpen(true);
+                                }}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -372,6 +379,42 @@ export default function VideosPage() {
           )}
         </main>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Video</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this video? This will remove all
+              associated tags, workflows, and URLs. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setVideoToDelete(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (videoToDelete) {
+                  deleteVideo.mutate({ id: videoToDelete });
+                }
+                setDeleteDialogOpen(false);
+                setVideoToDelete(null);
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

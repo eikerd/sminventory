@@ -297,6 +297,7 @@ export const videoUrls = sqliteTable("video_urls", {
   createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
 }, (table) => [
   index("idx_video_urls_video").on(table.videoId),
+  uniqueIndex("idx_video_urls_unique").on(table.videoId, table.url),
 ]);
 
 // Type exports
