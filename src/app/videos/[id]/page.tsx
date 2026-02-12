@@ -545,7 +545,7 @@ export default function VideoDetailPage({
                             value={tag.value}
                             source={tag.source}
                             onRemove={() =>
-                              removeTag.mutate({ tagId: tag.id! })
+                              tag.id && removeTag.mutate({ tagId: tag.id })
                             }
                           />
                         ))}
@@ -567,7 +567,7 @@ export default function VideoDetailPage({
                             value={tag.value}
                             source={tag.source}
                             onRemove={() =>
-                              removeTag.mutate({ tagId: tag.id! })
+                              tag.id && removeTag.mutate({ tagId: tag.id })
                             }
                           />
                         ))}
@@ -589,7 +589,7 @@ export default function VideoDetailPage({
                             value={tag.value}
                             source={tag.source}
                             onRemove={() =>
-                              removeTag.mutate({ tagId: tag.id! })
+                              tag.id && removeTag.mutate({ tagId: tag.id })
                             }
                           />
                         ))}

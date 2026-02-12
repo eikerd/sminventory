@@ -28,7 +28,6 @@ import {
   Search,
   Video,
   ExternalLink,
-  RefreshCw,
   Trash2,
   Eye,
   Loader2,

@@ -11,7 +11,7 @@ import {
   models,
   settings,
 } from "@/server/db/schema";
-import { eq, like, or, and, inArray, sql } from "drizzle-orm";
+import { eq, like, or, and, inArray, sql, type SQL } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import {
   scrapeVideoMetadata,
@@ -164,36 +164,48 @@ export const videosRouter = router({
       const limit = filters.limit || 50;
       const offset = filters.offset || 0;
 
-      // Get all videos
-      let allVideos = db.select().from(videos).all();
+      // Build WHERE conditions
+      const conditions: SQL<unknown>[] = [];
 
-      // Apply search filter
+      // Search filter - use SQL LIKE for better performance
       if (filters.search) {
-        const q = filters.search.toLowerCase();
-        allVideos = allVideos.filter(
-          (v) =>
-            v.title?.toLowerCase().includes(q) ||
-            v.channelName?.toLowerCase().includes(q) ||
-            v.url.toLowerCase().includes(q)
+        const searchPattern = `%${filters.search}%`;
+        conditions.push(
+          or(
+            like(videos.title, searchPattern),
+            like(videos.channelName, searchPattern),
+            like(videos.url, searchPattern)
+          )!
         );
       }
 
-      // Apply tag filter
+      // Tag filter - use subquery
       if (filters.tags && filters.tags.length > 0) {
         const videoIdsWithTags = db
           .select({ videoId: videoTags.videoId })
           .from(videoTags)
-          .where(inArray(videoTags.value, filters.tags))
-          .all()
-          .map((r) => r.videoId);
-        const tagSet = new Set(videoIdsWithTags);
-        allVideos = allVideos.filter((v) => tagSet.has(v.id));
+          .where(inArray(videoTags.value, filters.tags));
+
+        conditions.push(
+          inArray(videos.id, sql`(SELECT ${videoTags.videoId} FROM ${videoTags} WHERE ${inArray(videoTags.value, filters.tags)})`)
+        );
       }
 
-      const total = allVideos.length;
+      // Get total count with filters
+      const totalQuery = db
+        .select({ count: sql<number>`count(*)` })
+        .from(videos)
+        .where(conditions.length > 0 ? and(...conditions) : undefined);
+      const total = totalQuery.get()?.count || 0;
 
-      // Paginate
-      const paged = allVideos.slice(offset, offset + limit);
+      // Get paginated videos with filters applied in SQL
+      const paged = db
+        .select()
+        .from(videos)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .limit(limit)
+        .offset(offset)
+        .all();
 
       // Enrich with tag and workflow counts
       const enriched = paged.map((video) => {
