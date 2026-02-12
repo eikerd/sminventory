@@ -19,12 +19,21 @@ import {
   LayoutGrid,
 } from "lucide-react";
 import { CONFIG } from "@/lib/config";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
   const [showCivitaiKey, setShowCivitaiKey] = useState(false);
   const [showHfKey, setShowHfKey] = useState(false);
+  const [showGoogleKey, setShowGoogleKey] = useState(false);
   const [civitaiKey, setCivitaiKey] = useState("");
   const [hfKey, setHfKey] = useState("");
+  const [googleKey, setGoogleKey] = useState("");
+
+  const saveGoogleApiKey = trpc.videos.saveGoogleApiKey.useMutation({
+    onSuccess: () => toast.success("Google API key saved"),
+    onError: (e) => toast.error(e.message || "Failed to save key"),
+  });
   const [modelsPath, setModelsPath] = useState(CONFIG.paths.models);
   const [warehousePath, setWarehousePath] = useState(CONFIG.paths.warehouse);
   const [workflowPaths, setWorkflowPaths] = useState(CONFIG.paths.workflows);
@@ -127,6 +136,46 @@ export default function SettingsPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Used for downloading models from HuggingFace
+                </p>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <label htmlFor="google-api-key" className="text-sm font-medium">Google API Key (YouTube Data API)</label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      id="google-api-key"
+                      type={showGoogleKey ? "text" : "password"}
+                      placeholder="Enter your Google API key"
+                      value={googleKey}
+                      onChange={(e) => setGoogleKey(e.target.value)}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-1/2 -translate-y-1/2"
+                      onClick={() => setShowGoogleKey(!showGoogleKey)}
+                    >
+                      {showGoogleKey ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <Button
+                    onClick={() => saveGoogleApiKey.mutate({ apiKey: googleKey })}
+                    disabled={!googleKey || saveGoogleApiKey.isPending}
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Save
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Optional. Enables rich YouTube metadata (description, publish date, URLs in description).
+                  Without it, only basic info (title, channel, thumbnail) is available via oEmbed.
                 </p>
               </div>
             </CardContent>

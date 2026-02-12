@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, index } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // ═══════════════════════════════════════════════════════════════════
 // MODELS (with forensics)
@@ -234,7 +234,79 @@ export const scanLog = sqliteTable("scan_log", {
   scannedAt: text("scanned_at").default("CURRENT_TIMESTAMP"),
 });
 
+// ═══════════════════════════════════════════════════════════════════
+// VIDEOS (source of record for workflow tutorials)
+// ═══════════════════════════════════════════════════════════════════
+export const videos = sqliteTable("videos", {
+  id: text("id").primaryKey(),
+  url: text("url").notNull(),
+  title: text("title"),
+  description: text("description"),
+  channelName: text("channel_name"),
+  publishedAt: text("published_at"),
+  thumbnailUrl: text("thumbnail_url"),
+  duration: text("duration"),
+  cloudRenderUrl: text("cloud_render_url"),
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
+  updatedAt: text("updated_at").default("CURRENT_TIMESTAMP"),
+}, (table) => [
+  index("idx_videos_channel").on(table.channelName),
+  uniqueIndex("idx_videos_url_unique").on(table.url),
+]);
+
+// ═══════════════════════════════════════════════════════════════════
+// VIDEO WORKFLOWS (junction: video ↔ workflow)
+// ═══════════════════════════════════════════════════════════════════
+export const videoWorkflows = sqliteTable("video_workflows", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  videoId: text("video_id").notNull().references(() => videos.id, { onDelete: "cascade" }),
+  workflowId: text("workflow_id").notNull().references(() => workflows.id, { onDelete: "cascade" }),
+  notes: text("notes"),
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
+}, (table) => [
+  index("idx_video_workflows_video").on(table.videoId),
+  index("idx_video_workflows_workflow").on(table.workflowId),
+  uniqueIndex("idx_video_workflows_unique").on(table.videoId, table.workflowId),
+]);
+
+// ═══════════════════════════════════════════════════════════════════
+// VIDEO TAGS (CivitAI taxonomy: model_type, base_model, custom)
+// ═══════════════════════════════════════════════════════════════════
+export const videoTags = sqliteTable("video_tags", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  videoId: text("video_id").notNull().references(() => videos.id, { onDelete: "cascade" }),
+  category: text("category").notNull(), // "model_type" | "base_model" | "custom"
+  value: text("value").notNull(),
+  source: text("source"), // "auto" | "manual"
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
+}, (table) => [
+  index("idx_video_tags_video").on(table.videoId),
+  index("idx_video_tags_category").on(table.category),
+  uniqueIndex("idx_video_tags_unique").on(table.videoId, table.category, table.value),
+]);
+
+// ═══════════════════════════════════════════════════════════════════
+// VIDEO URLS (scraped from description + manually added)
+// ═══════════════════════════════════════════════════════════════════
+export const videoUrls = sqliteTable("video_urls", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  videoId: text("video_id").notNull().references(() => videos.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
+  label: text("label"),
+  source: text("source"), // "scraped" | "manual"
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
+}, (table) => [
+  index("idx_video_urls_video").on(table.videoId),
+  uniqueIndex("idx_video_urls_unique").on(table.videoId, table.url),
+]);
+
 // Type exports
+export type Video = typeof videos.$inferSelect;
+export type NewVideo = typeof videos.$inferInsert;
+export type VideoWorkflow = typeof videoWorkflows.$inferSelect;
+export type VideoTag = typeof videoTags.$inferSelect;
+export type VideoUrl = typeof videoUrls.$inferSelect;
+
 export type Model = typeof models.$inferSelect;
 export type NewModel = typeof models.$inferInsert;
 export type Workflow = typeof workflows.$inferSelect;
