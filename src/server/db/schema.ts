@@ -51,6 +51,9 @@ export const workflows = sqliteTable("workflows", {
   filepath: text("filepath").notNull(),
   name: text("name"),
 
+  // Source: "scanned" (from Stability Matrix), "video-uploaded" (user uploaded via video page)
+  source: text("source").default("scanned"),
+
   // Status: new, scanned-missing-items, scanned-error, scanned-ready-local, scanned-ready-cloud
   status: text("status").default("new"),
 
@@ -67,12 +70,42 @@ export const workflows = sqliteTable("workflows", {
   // Raw content
   rawJson: text("raw_json"),
 
+  // Workflow metadata (extracted from JSON)
+  description: text("description"),
+  author: text("author"),
+  version: text("version"),
+  tags: text("tags"), // JSON array of tags
+
+  // Sampler settings (extracted from KSampler nodes)
+  steps: integer("steps"),
+  cfg: real("cfg"),
+  scheduler: text("scheduler"),
+  sampler: text("sampler"),
+  denoise: real("denoise"),
+
+  // Resolution (extracted from EmptyLatentImage or similar nodes)
+  width: integer("width"),
+  height: integer("height"),
+  batchSize: integer("batch_size"),
+
+  // Special features (boolean flags)
+  hasUpscaler: integer("has_upscaler").default(0), // SQLite boolean (0 or 1)
+  hasFaceDetailer: integer("has_face_detailer").default(0),
+  hasControlNet: integer("has_controlnet").default(0),
+  hasIPAdapter: integer("has_ipadapter").default(0),
+  hasLora: integer("has_lora").default(0),
+
+  // Complexity metrics
+  nodeCount: integer("node_count"),
+  connectionCount: integer("connection_count"),
+
   // Timestamps
   createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
   scannedAt: text("scanned_at"),
   updatedAt: text("updated_at").default("CURRENT_TIMESTAMP"),
 }, (table) => [
   index("idx_workflows_status").on(table.status),
+  index("idx_workflows_source").on(table.source),
 ]);
 
 // ═══════════════════════════════════════════════════════════════════
@@ -240,17 +273,53 @@ export const scanLog = sqliteTable("scan_log", {
 export const videos = sqliteTable("videos", {
   id: text("id").primaryKey(),
   url: text("url").notNull(),
+
+  // Basic metadata
   title: text("title"),
   description: text("description"),
   channelName: text("channel_name"),
+  channelId: text("channel_id"),
   publishedAt: text("published_at"),
   thumbnailUrl: text("thumbnail_url"),
   duration: text("duration"),
+
+  // Statistics
+  viewCount: integer("view_count"),
+  likeCount: integer("like_count"),
+  commentCount: integer("comment_count"),
+
+  // Status
+  uploadStatus: text("upload_status"),
+  privacyStatus: text("privacy_status"),
+  license: text("license"),
+  embeddable: integer("embeddable"), // boolean as 0/1
+  publicStatsViewable: integer("public_stats_viewable"), // boolean as 0/1
+  madeForKids: integer("made_for_kids"), // boolean as 0/1
+
+  // Content details
+  dimension: text("dimension"), // 2d/3d
+  definition: text("definition"), // hd/sd
+  caption: integer("caption"), // boolean as 0/1
+  licensedContent: integer("licensed_content"), // boolean as 0/1
+  projection: text("projection"), // rectangular/360
+
+  // Topic details
+  topicCategories: text("topic_categories"), // JSON array of Wikipedia URLs
+
+  // Recording details
+  recordingDate: text("recording_date"),
+  locationDescription: text("location_description"),
+
+  // App-specific
   cloudRenderUrl: text("cloud_render_url"),
+  lastScanEvents: text("last_scan_events"), // JSON array of ScanEvent[]
+
+  // Timestamps
   createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
   updatedAt: text("updated_at").default("CURRENT_TIMESTAMP"),
 }, (table) => [
   index("idx_videos_channel").on(table.channelName),
+  index("idx_videos_channel_id").on(table.channelId),
   uniqueIndex("idx_videos_url_unique").on(table.url),
 ]);
 

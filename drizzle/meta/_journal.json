@@ -22,6 +22,27 @@
       "when": 1770914767927,
       "tag": "0002_busy_katie_power",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1770926869463,
+      "tag": "0003_mean_spitfire",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1770927892876,
+      "tag": "0004_clever_santa_claus",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1770932574629,
+      "tag": "0005_nebulous_rattler",
+      "breakpoints": true
     }
   ]
 }

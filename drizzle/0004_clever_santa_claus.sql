@@ -1,0 +1,19 @@
+ALTER TABLE `videos` ADD `channel_id` text;--> statement-breakpoint
+ALTER TABLE `videos` ADD `view_count` integer;--> statement-breakpoint
+ALTER TABLE `videos` ADD `like_count` integer;--> statement-breakpoint
+ALTER TABLE `videos` ADD `comment_count` integer;--> statement-breakpoint
+ALTER TABLE `videos` ADD `upload_status` text;--> statement-breakpoint
+ALTER TABLE `videos` ADD `privacy_status` text;--> statement-breakpoint
+ALTER TABLE `videos` ADD `license` text;--> statement-breakpoint
+ALTER TABLE `videos` ADD `embeddable` integer;--> statement-breakpoint
+ALTER TABLE `videos` ADD `public_stats_viewable` integer;--> statement-breakpoint
+ALTER TABLE `videos` ADD `made_for_kids` integer;--> statement-breakpoint
+ALTER TABLE `videos` ADD `dimension` text;--> statement-breakpoint
+ALTER TABLE `videos` ADD `definition` text;--> statement-breakpoint
+ALTER TABLE `videos` ADD `caption` integer;--> statement-breakpoint
+ALTER TABLE `videos` ADD `licensed_content` integer;--> statement-breakpoint
+ALTER TABLE `videos` ADD `projection` text;--> statement-breakpoint
+ALTER TABLE `videos` ADD `topic_categories` text;--> statement-breakpoint
+ALTER TABLE `videos` ADD `recording_date` text;--> statement-breakpoint
+ALTER TABLE `videos` ADD `location_description` text;--> statement-breakpoint
+CREATE INDEX `idx_videos_channel_id` ON `videos` (`channel_id`);

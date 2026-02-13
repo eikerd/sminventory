@@ -121,6 +121,182 @@ function extractDependencies(workflow: ComfyUIWorkflow): ExtractedDependency[] {
 }
 
 /**
+ * Extract sampler settings from KSampler nodes
+ */
+function extractSamplerSettings(workflow: ComfyUIWorkflow): {
+  steps?: number;
+  cfg?: number;
+  scheduler?: string;
+  sampler?: string;
+  denoise?: number;
+} {
+  const settings: ReturnType<typeof extractSamplerSettings> = {};
+
+  // Look for KSampler or KSamplerAdvanced nodes
+  const samplerNode = workflow.nodes.find(
+    (n) => n.type === "KSampler" || n.type === "KSamplerAdvanced"
+  );
+
+  if (samplerNode && samplerNode.widgets_values) {
+    // ComfyUI widget_values indices are fixed by node definition and do not change.
+    // KSampler: [seed, control_after_generate, steps, cfg, sampler_name, scheduler, denoise]
+    // KSamplerAdvanced: [add_noise, noise_seed, control_after_generate, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise]
+    // eslint-disable-next-line @typescript-eslint/no-magic-numbers -- ComfyUI widget order is fixed by spec
+    const values = samplerNode.widgets_values;
+
+    if (samplerNode.type === "KSampler") {
+      if (typeof values[2] === "number") settings.steps = values[2];
+      if (typeof values[3] === "number") settings.cfg = values[3];
+      if (typeof values[4] === "string") settings.sampler = values[4];
+      if (typeof values[5] === "string") settings.scheduler = values[5];
+      if (typeof values[6] === "number") settings.denoise = values[6];
+    } else if (samplerNode.type === "KSamplerAdvanced") {
+      if (typeof values[3] === "number") settings.steps = values[3];
+      if (typeof values[4] === "number") settings.cfg = values[4];
+      if (typeof values[5] === "string") settings.sampler = values[5];
+      if (typeof values[6] === "string") settings.scheduler = values[6];
+      if (typeof values[10] === "number") settings.denoise = values[10];
+    }
+  }
+
+  return settings;
+}
+
+/**
+ * Extract resolution from EmptyLatentImage or LoadImage nodes
+ */
+function extractResolution(workflow: ComfyUIWorkflow): {
+  width?: number;
+  height?: number;
+  batchSize?: number;
+} {
+  const resolution: ReturnType<typeof extractResolution> = {};
+
+  // Look for EmptyLatentImage node (most common for generation workflows)
+  const latentNode = workflow.nodes.find((n) => n.type === "EmptyLatentImage");
+  if (latentNode && latentNode.widgets_values) {
+    // EmptyLatentImage widget order: width, height, batch_size
+    if (typeof latentNode.widgets_values[0] === "number") {
+      resolution.width = latentNode.widgets_values[0];
+    }
+    if (typeof latentNode.widgets_values[1] === "number") {
+      resolution.height = latentNode.widgets_values[1];
+    }
+    if (typeof latentNode.widgets_values[2] === "number") {
+      resolution.batchSize = latentNode.widgets_values[2];
+    }
+  }
+
+  // Note: LoadImage nodes don't directly provide resolution info.
+  // If no EmptyLatentImage is found, this is likely an img2img workflow
+  // and resolution depends on the input image at runtime.
+
+  return resolution;
+}
+
+/**
+ * Extract workflow metadata from extra field
+ */
+function extractMetadata(workflow: ComfyUIWorkflow): {
+  description?: string;
+  author?: string;
+  version?: string;
+  tags?: string[];
+} {
+  const metadata: ReturnType<typeof extractMetadata> = {};
+
+  if (workflow.extra) {
+    // Check for common metadata fields
+    if (typeof workflow.extra.description === "string") {
+      metadata.description = workflow.extra.description;
+    }
+    if (typeof workflow.extra.author === "string") {
+      metadata.author = workflow.extra.author;
+    }
+    if (typeof workflow.extra.version === "string") {
+      metadata.version = workflow.extra.version;
+    }
+    if (Array.isArray(workflow.extra.tags)) {
+      metadata.tags = workflow.extra.tags.filter((t): t is string => typeof t === "string");
+    }
+
+    // Some workflows use different field names
+    if (!metadata.description && typeof workflow.extra.desc === "string") {
+      metadata.description = workflow.extra.desc;
+    }
+    if (!metadata.author && typeof workflow.extra.creator === "string") {
+      metadata.author = workflow.extra.creator;
+    }
+  }
+
+  return metadata;
+}
+
+/**
+ * Detect special features in the workflow
+ */
+function detectFeatures(workflow: ComfyUIWorkflow): {
+  hasUpscaler: boolean;
+  hasFaceDetailer: boolean;
+  hasControlNet: boolean;
+  hasIPAdapter: boolean;
+  hasLora: boolean;
+} {
+  const features = {
+    hasUpscaler: false,
+    hasFaceDetailer: false,
+    hasControlNet: false,
+    hasIPAdapter: false,
+    hasLora: false,
+  };
+
+  for (const node of workflow.nodes) {
+    // Upscalers
+    if (
+      node.type.includes("Upscale") ||
+      node.type === "UpscaleModelLoader" ||
+      node.type === "ImageUpscaleWithModel"
+    ) {
+      features.hasUpscaler = true;
+    }
+
+    // Face detailers
+    if (
+      node.type.includes("FaceDetailer") ||
+      node.type.includes("FaceRestore") ||
+      node.type === "FaceRestoreCFWithModel"
+    ) {
+      features.hasFaceDetailer = true;
+    }
+
+    // ComfyUI node types use consistent naming conventions (e.g. "ControlNetApply",
+    // "ControlNetLoader", "IPAdapterApply", "LoraLoader"). Substring matching is
+    // intentional to catch all variants from different custom node packs.
+    if (node.type.includes("ControlNet")) features.hasControlNet = true;
+    if (node.type.includes("IPAdapter")) features.hasIPAdapter = true;
+    if (node.type.includes("Lora") || node.type.includes("LoRA")) features.hasLora = true;
+  }
+
+  return features;
+}
+
+/**
+ * Calculate complexity metrics
+ */
+function calculateComplexity(workflow: ComfyUIWorkflow): {
+  nodeCount: number;
+  connectionCount: number;
+} {
+  return {
+    nodeCount: workflow.nodes.length,
+    // last_link_id is the highest link ID (auto-incremented). It approximates
+    // connection count; deleted links leave gaps but the value is sufficient
+    // for complexity scoring where precision isn't critical.
+    connectionCount: workflow.last_link_id || 0,
+  };
+}
+
+/**
  * Parse a workflow JSON file
  */
 export async function parseWorkflowFile(filepath: string): Promise<{
@@ -141,6 +317,13 @@ export async function parseWorkflowFile(filepath: string): Promise<{
     // Extract dependencies
     const extractedDeps = extractDependencies(json);
 
+    // Extract comprehensive workflow data
+    const samplerSettings = extractSamplerSettings(json);
+    const resolution = extractResolution(json);
+    const metadata = extractMetadata(json);
+    const features = detectFeatures(json);
+    const complexity = calculateComplexity(json);
+
     // Create workflow record
     const workflow: NewWorkflow = {
       id,
@@ -155,6 +338,37 @@ export async function parseWorkflowFile(filepath: string): Promise<{
       totalSizeBytes: 0,
       estimatedVramGb: null,
       rawJson: content,
+
+      // Workflow metadata
+      description: metadata.description,
+      author: metadata.author,
+      version: metadata.version,
+      tags: metadata.tags ? JSON.stringify(metadata.tags) : null,
+
+      // Sampler settings
+      steps: samplerSettings.steps,
+      cfg: samplerSettings.cfg,
+      scheduler: samplerSettings.scheduler,
+      sampler: samplerSettings.sampler,
+      denoise: samplerSettings.denoise,
+
+      // Resolution
+      width: resolution.width,
+      height: resolution.height,
+      batchSize: resolution.batchSize,
+
+      // Special features
+      hasUpscaler: features.hasUpscaler ? 1 : 0,
+      hasFaceDetailer: features.hasFaceDetailer ? 1 : 0,
+      hasControlNet: features.hasControlNet ? 1 : 0,
+      hasIPAdapter: features.hasIPAdapter ? 1 : 0,
+      hasLora: features.hasLora ? 1 : 0,
+
+      // Complexity metrics
+      nodeCount: complexity.nodeCount,
+      connectionCount: complexity.connectionCount,
+
+      // Timestamps
       createdAt: new Date().toISOString(),
       scannedAt: null,
       updatedAt: new Date().toISOString(),

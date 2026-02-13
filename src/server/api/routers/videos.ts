@@ -23,7 +23,23 @@ import {
   URL_SOURCE,
   mapArchitectureToBaseModel,
   mapModelTypeToDisplay,
+  CONFIG,
 } from "@/lib/config";
+import fs from "fs";
+import path from "path";
+import { parseWorkflowFile } from "@/server/services/workflow-parser";
+import {
+  findModelFile,
+  estimateMissingModelSize,
+  formatFileSize,
+  getModelDirectories,
+} from "@/server/services/workflow-dependency-tree";
+import {
+  estimateModelVRAM,
+  estimateWorkflowVRAM,
+  type ModelDependency,
+} from "@/server/services/vram-estimator";
+import type { ScanEvent } from "@/types/scan-events";
 
 // ---------- Helpers ----------
 
@@ -291,10 +307,25 @@ export const videosRouter = router({
       // Build lookup map
       const workflowById = new Map(workflowsData.map(w => [w.id, w]));
 
-      // Merge links with workflow data
+      // Fetch dependencies for all workflows in one query
+      const dependencies = workflowIds.length > 0
+        ? db.select().from(workflowDependencies).where(inArray(workflowDependencies.workflowId, workflowIds)).all()
+        : [];
+
+      // Build dependencies lookup map
+      const depsByWorkflowId = new Map<string, typeof dependencies>();
+      dependencies.forEach(dep => {
+        if (!depsByWorkflowId.has(dep.workflowId)) {
+          depsByWorkflowId.set(dep.workflowId, []);
+        }
+        depsByWorkflowId.get(dep.workflowId)!.push(dep);
+      });
+
+      // Merge links with workflow data and dependencies
       const linkedWorkflows = links.map((link) => ({
         ...link,
         workflow: workflowById.get(link.workflowId),
+        dependencies: depsByWorkflowId.get(link.workflowId) || [],
       }));
 
       // Get tags
@@ -383,21 +414,43 @@ export const videosRouter = router({
       const id = uuidv4();
       const now = new Date().toISOString();
 
-      // Insert video record
-      db.insert(videos)
-        .values({
-          id,
-          url: input.url,
-          title: metadata.title,
-          description: metadata.description,
-          channelName: metadata.channelName,
-          publishedAt: metadata.publishedAt,
-          thumbnailUrl: metadata.thumbnailUrl,
-          duration: metadata.duration,
-          createdAt: now,
-          updatedAt: now,
-        })
-        .run();
+      // Insert video record with comprehensive metadata
+      // Build typed insert data using discriminated union narrowing
+      const videoData: typeof videos.$inferInsert = {
+        id,
+        url: input.url,
+        // Basic metadata (common to both sources)
+        title: metadata.title,
+        description: metadata.description,
+        channelName: metadata.channelName,
+        publishedAt: metadata.publishedAt,
+        thumbnailUrl: metadata.thumbnailUrl,
+        duration: metadata.duration,
+        // Data API fields - populated or null based on source
+        channelId: metadata.source === 'data_api' ? metadata.channelId : null,
+        viewCount: metadata.source === 'data_api' ? metadata.viewCount : null,
+        likeCount: metadata.source === 'data_api' ? metadata.likeCount : null,
+        commentCount: metadata.source === 'data_api' ? metadata.commentCount : null,
+        uploadStatus: metadata.source === 'data_api' ? metadata.uploadStatus : null,
+        privacyStatus: metadata.source === 'data_api' ? metadata.privacyStatus : null,
+        license: metadata.source === 'data_api' ? metadata.license : null,
+        embeddable: metadata.source === 'data_api' && metadata.embeddable !== null ? (metadata.embeddable ? 1 : 0) : null,
+        publicStatsViewable: metadata.source === 'data_api' && metadata.publicStatsViewable !== null ? (metadata.publicStatsViewable ? 1 : 0) : null,
+        madeForKids: metadata.source === 'data_api' && metadata.madeForKids !== null ? (metadata.madeForKids ? 1 : 0) : null,
+        dimension: metadata.source === 'data_api' ? metadata.dimension : null,
+        definition: metadata.source === 'data_api' ? metadata.definition : null,
+        caption: metadata.source === 'data_api' && metadata.caption !== null ? (metadata.caption ? 1 : 0) : null,
+        licensedContent: metadata.source === 'data_api' && metadata.licensedContent !== null ? (metadata.licensedContent ? 1 : 0) : null,
+        projection: metadata.source === 'data_api' ? metadata.projection : null,
+        topicCategories: metadata.source === 'data_api' && metadata.topicCategories ? JSON.stringify(metadata.topicCategories) : null,
+        recordingDate: metadata.source === 'data_api' ? metadata.recordingDate : null,
+        locationDescription: metadata.source === 'data_api' ? metadata.locationDescription : null,
+        // Timestamps
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      db.insert(videos).values(videoData).run();
 
       // Insert scraped URLs from description
       if (metadata.descriptionUrls.length > 0) {
@@ -512,6 +565,420 @@ export const videosRouter = router({
         .all();
     }),
 
+  uploadWorkflow: publicProcedure
+    .input(
+      z.object({
+        videoId: z.string(),
+        filename: z.string(),
+        content: z.string(), // JSON content of the workflow file
+      })
+    )
+    .mutation(async ({ input }) => {
+      // Sanitize inputs to prevent path traversal
+      const sanitizedVideoId = path.basename(input.videoId);
+      if (sanitizedVideoId !== input.videoId || sanitizedVideoId.includes('..') || sanitizedVideoId.includes('\0')) {
+        throw new Error("Invalid video ID");
+      }
+      const sanitizedFilename = path.basename(input.filename);
+      if (sanitizedFilename !== input.filename || sanitizedFilename.includes('..') || sanitizedFilename.includes('\0')) {
+        throw new Error("Invalid filename");
+      }
+
+      // Validate filename extension
+      if (!sanitizedFilename.endsWith('.json')) {
+        throw new Error("Only .json files are allowed");
+      }
+
+      // Validate JSON before writing to disk
+      try {
+        JSON.parse(input.content);
+      } catch {
+        throw new Error("Invalid JSON file");
+      }
+
+      // Create video-specific workflow directory
+      const videoWorkflowDir = path.join(
+        CONFIG.paths.videoWorkflows,
+        sanitizedVideoId
+      );
+
+      await fs.promises.mkdir(videoWorkflowDir, { recursive: true });
+
+      // Save workflow file
+      const filepath = path.join(videoWorkflowDir, sanitizedFilename);
+      await fs.promises.writeFile(filepath, input.content, "utf8");
+
+      // Parse workflow file to get workflow and dependencies data
+      const parsed = await parseWorkflowFile(filepath);
+
+      if (!parsed) {
+        // Clean up orphaned file if parsing fails
+        await fs.promises.unlink(filepath).catch(() => {});
+        throw new Error("Failed to parse workflow file");
+      }
+
+      const { workflow, dependencies } = parsed;
+      const now = new Date().toISOString();
+
+      try {
+        // Atomic transaction: workflow + deps + link all succeed or all rollback
+        db.transaction((tx) => {
+          tx.insert(workflows).values({
+            ...workflow,
+            source: "video-uploaded",
+            updatedAt: now,
+          }).run();
+
+          if (dependencies.length > 0) {
+            tx.insert(workflowDependencies).values(dependencies).run();
+          }
+
+          tx.insert(videoWorkflows)
+            .values({
+              videoId: input.videoId,
+              workflowId: workflow.id,
+              createdAt: now,
+            })
+            .run();
+        });
+
+        // Auto-tag from the uploaded workflow (outside transaction - non-critical)
+        deriveAutoTagsFromWorkflow(input.videoId, workflow.id);
+
+        return {
+          workflowId: workflow.id,
+          filepath,
+          dependencyCount: dependencies.length,
+        };
+      } catch (dbError) {
+        console.error("Database error while saving uploaded workflow:", dbError);
+        // Clean up orphaned file if database operation fails
+        await fs.promises.unlink(filepath).catch(() => {});
+        throw new Error("Failed to save workflow to database");
+      }
+    }),
+
+  rescanWorkflows: publicProcedure
+    .input(z.object({ videoId: z.string() }))
+    .mutation(async ({ input }) => {
+      // Get all linked workflows for this video
+      const linked = db
+        .select()
+        .from(videoWorkflows)
+        .where(eq(videoWorkflows.videoId, input.videoId))
+        .all();
+
+      if (linked.length === 0) {
+        throw new Error("No workflows linked to this video");
+      }
+
+      let rescanned = 0;
+
+      for (const link of linked) {
+        const wf = db
+          .select()
+          .from(workflows)
+          .where(eq(workflows.id, link.workflowId))
+          .get();
+
+        if (!wf?.filepath) continue;
+
+        // Re-parse the workflow file
+        const parsed = await parseWorkflowFile(wf.filepath);
+        if (!parsed) continue;
+
+        const { dependencies: newDeps } = parsed;
+
+        // Delete old dependencies
+        db.delete(workflowDependencies)
+          .where(eq(workflowDependencies.workflowId, wf.id))
+          .run();
+
+        // Insert new dependencies with the EXISTING workflow ID
+        if (newDeps.length > 0) {
+          const depsWithCorrectId = newDeps.map((d) => ({
+            ...d,
+            workflowId: wf.id,
+          }));
+          db.insert(workflowDependencies).values(depsWithCorrectId).run();
+        }
+
+        // Update workflow record
+        db.update(workflows)
+          .set({
+            totalDependencies: newDeps.length,
+            missingCount: newDeps.length,
+            resolvedLocal: 0,
+            resolvedWarehouse: 0,
+            scannedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          })
+          .where(eq(workflows.id, wf.id))
+          .run();
+
+        rescanned++;
+      }
+
+      // Recalculate auto-tags
+      recalculateAutoTags(input.videoId);
+
+      return { rescanned };
+    }),
+
+  rescanWorkflowsVerbose: publicProcedure
+    .input(z.object({ videoId: z.string() }))
+    .mutation(async ({ input }) => {
+      const events: ScanEvent[] = [];
+      const ts = () => new Date().toISOString();
+
+      // Get all linked workflows for this video
+      const linked = db
+        .select()
+        .from(videoWorkflows)
+        .where(eq(videoWorkflows.videoId, input.videoId))
+        .all();
+
+      if (linked.length === 0) {
+        throw new Error("No workflows linked to this video");
+      }
+
+      events.push({
+        timestamp: ts(),
+        phase: "start",
+        action: `Starting rescan for ${linked.length} linked workflow(s)`,
+        result: "info",
+      });
+
+      let rescanned = 0;
+
+      for (const link of linked) {
+        const wf = db
+          .select()
+          .from(workflows)
+          .where(eq(workflows.id, link.workflowId))
+          .get();
+
+        if (!wf?.filepath) continue;
+
+        // ── Parse phase ──
+        events.push({
+          timestamp: ts(),
+          phase: "parse",
+          action: `Parsing workflow: ${wf.filename || path.basename(wf.filepath)}`,
+          result: "info",
+          details: wf.filepath,
+        });
+
+        const parsed = await parseWorkflowFile(wf.filepath);
+        if (!parsed) {
+          events.push({
+            timestamp: ts(),
+            phase: "parse",
+            action: `Failed to parse workflow: ${wf.filename || wf.filepath}`,
+            result: "warning",
+          });
+          continue;
+        }
+
+        const { dependencies: newDeps } = parsed;
+
+        // ── Extract phase ──
+        const nodeTypes = [...new Set(newDeps.map((d) => d.nodeType))];
+        events.push({
+          timestamp: ts(),
+          phase: "extract",
+          action: `Extracted ${newDeps.length} dependencies`,
+          result: "info",
+          details: `Node types: ${nodeTypes.join(", ")}`,
+        });
+
+        for (const dep of newDeps) {
+          events.push({
+            timestamp: ts(),
+            phase: "extract",
+            modelType: dep.modelType,
+            modelName: dep.modelName,
+            action: `Found dependency: ${dep.modelName} (${dep.modelType}) from ${dep.nodeType}`,
+            result: "info",
+          });
+        }
+
+        // ── Check phase: find each model on disk ──
+        const modelDeps: ModelDependency[] = [];
+
+        for (const dep of newDeps) {
+          const dirs = await getModelDirectories(dep.modelType);
+          events.push({
+            timestamp: ts(),
+            phase: "check",
+            modelType: dep.modelType,
+            modelName: dep.modelName,
+            action: `Checking disk: ${dep.modelName}`,
+            result: "info",
+            details: `Searching in: ${dirs.join(", ")}`,
+          });
+
+          const fileResult = await findModelFile(dep.modelType, dep.modelName);
+          const found = fileResult && fileResult.exists;
+
+          if (found && fileResult) {
+            events.push({
+              timestamp: ts(),
+              phase: "check",
+              modelType: dep.modelType,
+              modelName: dep.modelName,
+              action: `Local copy verified: ${dep.modelName}`,
+              result: "verified",
+              exists: true,
+              sizeBytes: fileResult.sizeBytes,
+              sizeFormatted: fileResult.size,
+              details: fileResult.path,
+            });
+
+            const precision = dep.modelName.toLowerCase().includes("fp8")
+              ? "fp8"
+              : dep.modelName.toLowerCase().includes("gguf")
+                ? "gguf"
+                : "unknown";
+            modelDeps.push({
+              type: dep.modelType,
+              precision,
+              sizeBytes: fileResult.sizeBytes,
+            });
+          } else {
+            const estimated = estimateMissingModelSize(dep.modelType, dep.modelName);
+            events.push({
+              timestamp: ts(),
+              phase: "check",
+              modelType: dep.modelType,
+              modelName: dep.modelName,
+              action: `Missing: ${dep.modelName}`,
+              result: "missing",
+              exists: false,
+              sizeBytes: estimated,
+              sizeFormatted: `~${formatFileSize(estimated)}`,
+              details: `Estimated from type=${dep.modelType} + filename hints`,
+            });
+
+            const precision = dep.modelName.toLowerCase().includes("fp8")
+              ? "fp8"
+              : dep.modelName.toLowerCase().includes("gguf")
+                ? "gguf"
+                : "unknown";
+            modelDeps.push({
+              type: dep.modelType,
+              precision,
+              sizeBytes: estimated,
+            });
+          }
+        }
+
+        // ── VRAM phase ──
+        for (const mdep of modelDeps) {
+          const vram = estimateModelVRAM(mdep.type, mdep.precision, mdep.sizeBytes);
+          events.push({
+            timestamp: ts(),
+            phase: "vram",
+            modelType: mdep.type,
+            action: `VRAM for ${mdep.type}: ${vram.toFixed(1)} GB (${mdep.precision})`,
+            result: "estimated",
+            vramGB: Math.round(vram * 100) / 100,
+          });
+        }
+
+        const vramEstimate = estimateWorkflowVRAM(modelDeps);
+        const breakdownStr = vramEstimate.breakdown
+          .map((b) => `${b.type}: ${b.vram} GB`)
+          .join(", ");
+        events.push({
+          timestamp: ts(),
+          phase: "vram",
+          action: `Peak VRAM estimate: ${vramEstimate.peakEstimate} GB`,
+          result: "estimated",
+          vramGB: vramEstimate.peakEstimate,
+          details: breakdownStr,
+        });
+
+        // ── DB update (resolve phase) ──
+        db.delete(workflowDependencies)
+          .where(eq(workflowDependencies.workflowId, wf.id))
+          .run();
+
+        if (newDeps.length > 0) {
+          const depsWithCorrectId = newDeps.map((d) => ({
+            ...d,
+            workflowId: wf.id,
+          }));
+          db.insert(workflowDependencies).values(depsWithCorrectId).run();
+        }
+
+        db.update(workflows)
+          .set({
+            totalDependencies: newDeps.length,
+            missingCount: newDeps.length,
+            resolvedLocal: 0,
+            resolvedWarehouse: 0,
+            scannedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          })
+          .where(eq(workflows.id, wf.id))
+          .run();
+
+        events.push({
+          timestamp: ts(),
+          phase: "resolve",
+          action: `Updated workflow record: ${newDeps.length} deps`,
+          result: "success",
+        });
+
+        rescanned++;
+      }
+
+      // ── Tags phase ──
+      recalculateAutoTags(input.videoId);
+
+      // Collect derived tags for display
+      const derivedTags = db
+        .select()
+        .from(videoTags)
+        .where(
+          and(
+            eq(videoTags.videoId, input.videoId),
+            eq(videoTags.source, TAG_SOURCE.AUTO)
+          )
+        )
+        .all()
+        .map((t) => t.value);
+
+      if (derivedTags.length > 0) {
+        events.push({
+          timestamp: ts(),
+          phase: "tags",
+          action: `Auto-tagged: [${derivedTags.join(", ")}]`,
+          result: "info",
+        });
+      }
+
+      // ── Complete ──
+      events.push({
+        timestamp: ts(),
+        phase: "complete",
+        action: `Rescan complete. ${rescanned} workflow(s) processed.`,
+        result: "success",
+      });
+
+      // Persist scan events to DB
+      db.update(videos)
+        .set({
+          lastScanEvents: JSON.stringify(events),
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(videos.id, input.videoId))
+        .run();
+
+      return { rescanned, events };
+    }),
+
   removeWorkflow: publicProcedure
     .input(
       z.object({
@@ -615,15 +1082,42 @@ export const videosRouter = router({
 
       const metadata = await scrapeVideoMetadata(video.url);
       const now = new Date().toISOString();
+      const isDataApi = metadata.source === 'data_api';
+      const api = isDataApi ? metadata : null;
 
       db.update(videos)
         .set({
+          // Basic metadata
           title: metadata.title || video.title,
           description: metadata.description || video.description,
           channelName: metadata.channelName || video.channelName,
+          channelId: api ? (api.channelId || video.channelId) : video.channelId,
           publishedAt: metadata.publishedAt || video.publishedAt,
           thumbnailUrl: metadata.thumbnailUrl || video.thumbnailUrl,
           duration: metadata.duration || video.duration,
+          // Statistics
+          viewCount: api ? api.viewCount : video.viewCount,
+          likeCount: api ? api.likeCount : video.likeCount,
+          commentCount: api ? api.commentCount : video.commentCount,
+          // Status
+          uploadStatus: api ? api.uploadStatus : video.uploadStatus,
+          privacyStatus: api ? api.privacyStatus : video.privacyStatus,
+          license: api ? api.license : video.license,
+          embeddable: api ? (api.embeddable ? 1 : 0) : video.embeddable,
+          publicStatsViewable: api ? (api.publicStatsViewable ? 1 : 0) : video.publicStatsViewable,
+          madeForKids: api ? (api.madeForKids ? 1 : 0) : video.madeForKids,
+          // Content details
+          dimension: api ? api.dimension : video.dimension,
+          definition: api ? api.definition : video.definition,
+          caption: api ? (api.caption ? 1 : 0) : video.caption,
+          licensedContent: api ? (api.licensedContent ? 1 : 0) : video.licensedContent,
+          projection: api ? api.projection : video.projection,
+          // Topic details
+          topicCategories: api ? JSON.stringify(api.topicCategories || []) : video.topicCategories,
+          // Recording details
+          recordingDate: api ? api.recordingDate : video.recordingDate,
+          locationDescription: api ? api.locationDescription : video.locationDescription,
+          // Timestamp
           updatedAt: now,
         })
         .where(eq(videos.id, input.id))

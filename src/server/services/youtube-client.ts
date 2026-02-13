@@ -23,16 +23,46 @@ export interface OEmbedResult {
 }
 
 export interface YouTubeVideoDetails {
+  // Basic metadata
   title: string;
   description: string;
   channelName: string;
+  channelId: string;
   publishedAt: string;
   thumbnailUrl: string;
   duration: string | null;
   descriptionUrls: string[];
+
+  // Statistics
+  viewCount: number | null;
+  likeCount: number | null;
+  commentCount: number | null;
+
+  // Status
+  uploadStatus: string | null;
+  privacyStatus: string | null;
+  license: string | null;
+  embeddable: boolean | null;
+  publicStatsViewable: boolean | null;
+  madeForKids: boolean | null;
+
+  // Content details
+  dimension: string | null;
+  definition: string | null;
+  caption: boolean | null;
+  licensedContent: boolean | null;
+  projection: string | null;
+
+  // Topic details
+  topicCategories: string[] | null;
+
+  // Recording details
+  recordingDate: string | null;
+  locationDescription: string | null;
 }
 
-export interface ScrapeResult {
+// Base metadata fields common to both sources
+interface BaseVideoMetadata {
   title: string | null;
   description: string | null;
   channelName: string | null;
@@ -40,8 +70,41 @@ export interface ScrapeResult {
   thumbnailUrl: string | null;
   duration: string | null;
   descriptionUrls: string[];
-  source: "data_api" | "oembed";
 }
+
+// oEmbed metadata (free, no API key required)
+export interface OEmbedMetadata extends BaseVideoMetadata {
+  source: "oembed";
+}
+
+// YouTube Data API metadata (requires API key, includes comprehensive stats)
+export interface DataApiMetadata extends BaseVideoMetadata {
+  source: "data_api";
+  channelId: string | null;
+  viewCount: number | null;
+  likeCount: number | null;
+  commentCount: number | null;
+  uploadStatus: string | null;
+  privacyStatus: string | null;
+  license: string | null;
+  embeddable: boolean | null;
+  publicStatsViewable: boolean | null;
+  madeForKids: boolean | null;
+  dimension: string | null;
+  definition: string | null;
+  caption: boolean | null;
+  licensedContent: boolean | null;
+  projection: string | null;
+  topicCategories: string[] | null;
+  recordingDate: string | null;
+  locationDescription: string | null;
+}
+
+// Discriminated union type
+export type VideoMetadata = OEmbedMetadata | DataApiMetadata;
+
+// Legacy alias for backward compatibility
+export type ScrapeResult = VideoMetadata;
 
 // ---------- Video ID Extraction ----------
 
@@ -95,12 +158,18 @@ export async function fetchVideoDetails(
   videoId: string,
   apiKey?: string
 ): Promise<YouTubeVideoDetails | null> {
-  const key = apiKey || getGoogleApiKey();
-  if (!key) return null;
+  // Determine API key from parameter, database, or environment
+  const key = apiKey || getGoogleApiKey() || process.env.youtube_data_api;
+  if (!key) {
+    return null;
+  }
 
   try {
-    const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=${key}`;
+    // Request ALL available parts for comprehensive metadata
+    const parts = 'snippet,contentDetails,statistics,status,topicDetails,recordingDetails';
+    const url = `https://www.googleapis.com/youtube/v3/videos?part=${parts}&id=${videoId}&key=${key}`;
     const response = await fetch(url);
+
     if (!response.ok) {
       const errorBody = await response.text().catch(() => "Unable to read error body");
       console.warn(
@@ -108,22 +177,60 @@ export async function fetchVideoDetails(
       );
       return null;
     }
+
     const data = await response.json();
     const item = data.items?.[0];
     if (!item) return null;
 
     const description = item.snippet?.description || "";
+    const snippet = item.snippet || {};
+    const contentDetails = item.contentDetails || {};
+    const statistics = item.statistics || {};
+    const status = item.status || {};
+    const topicDetails = item.topicDetails || {};
+    const recordingDetails = item.recordingDetails || {};
+
     return {
-      title: item.snippet?.title || "",
+      // Basic metadata
+      title: snippet.title || "",
       description,
-      channelName: item.snippet?.channelTitle || "",
-      publishedAt: item.snippet?.publishedAt || "",
+      channelName: snippet.channelTitle || "",
+      channelId: snippet.channelId || "",
+      publishedAt: snippet.publishedAt || "",
       thumbnailUrl:
-        item.snippet?.thumbnails?.maxres?.url ||
-        item.snippet?.thumbnails?.high?.url ||
-        item.snippet?.thumbnails?.default?.url || "",
-      duration: item.contentDetails?.duration || null,
+        snippet.thumbnails?.maxres?.url ||
+        snippet.thumbnails?.high?.url ||
+        snippet.thumbnails?.standard?.url ||
+        snippet.thumbnails?.default?.url || "",
+      duration: contentDetails.duration || null,
       descriptionUrls: parseDescriptionUrls(description),
+
+      // Statistics
+      viewCount: statistics.viewCount ? parseInt(statistics.viewCount, 10) : null,
+      likeCount: statistics.likeCount ? parseInt(statistics.likeCount, 10) : null,
+      commentCount: statistics.commentCount ? parseInt(statistics.commentCount, 10) : null,
+
+      // Status
+      uploadStatus: status.uploadStatus || null,
+      privacyStatus: status.privacyStatus || null,
+      license: status.license || null,
+      embeddable: status.embeddable ?? null,
+      publicStatsViewable: status.publicStatsViewable ?? null,
+      madeForKids: status.madeForKids ?? null,
+
+      // Content details
+      dimension: contentDetails.dimension || null,
+      definition: contentDetails.definition || null,
+      caption: contentDetails.caption === 'true' ? true : contentDetails.caption === 'false' ? false : null,
+      licensedContent: contentDetails.licensedContent ?? null,
+      projection: contentDetails.projection || null,
+
+      // Topic details
+      topicCategories: topicDetails.topicCategories || null,
+
+      // Recording details
+      recordingDate: recordingDetails.recordingDate || null,
+      locationDescription: recordingDetails.locationDescription || null,
     };
   } catch (error) {
     console.error("YouTube Data API fetch failed:", error);

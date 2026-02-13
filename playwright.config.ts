@@ -12,7 +12,7 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:6660',
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
+    screenshot: process.env.CI ? 'only-on-failure' : 'on',
     video: 'on-first-retry',
   },
   projects: [
