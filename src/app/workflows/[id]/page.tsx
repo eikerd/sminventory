@@ -8,28 +8,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DataTable } from "@/components/ui/data-table";
 import { logger } from "@/lib/logger";
 import { ErrorHandler } from "@/lib/error-handler";
 import {
   ArrowLeft,
-  CheckCircle,
-  XCircle,
-  Cloud,
-  AlertCircle,
   HardDrive,
   RefreshCw,
   Download,
-  FolderTree,
-  Network,
-  Table2,
   AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
-import { WORKFLOW_STATUS, DEP_STATUS } from "@/lib/config";
+import { WORKFLOW_STATUS } from "@/lib/config";
 import { WorkflowDependencyTree } from "@/components/workflow-dependency-tree";
 
 function formatBytes(bytes: number): string {
@@ -38,36 +28,6 @@ function formatBytes(bytes: number): string {
   const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
-}
-
-function getStatusIcon(status: string | null) {
-  switch (status) {
-    case DEP_STATUS.RESOLVED_LOCAL:
-      return <CheckCircle className="h-4 w-4 text-green-500" />;
-    case DEP_STATUS.RESOLVED_WAREHOUSE:
-      return <Cloud className="h-4 w-4 text-blue-500" />;
-    case DEP_STATUS.MISSING:
-      return <XCircle className="h-4 w-4 text-red-500" />;
-    case DEP_STATUS.INCOMPATIBLE:
-      return <AlertCircle className="h-4 w-4 text-orange-500" />;
-    default:
-      return <AlertCircle className="h-4 w-4 text-gray-500" />;
-  }
-}
-
-function getStatusLabel(status: string | null) {
-  switch (status) {
-    case DEP_STATUS.RESOLVED_LOCAL:
-      return "Local";
-    case DEP_STATUS.RESOLVED_WAREHOUSE:
-      return "Warehouse";
-    case DEP_STATUS.MISSING:
-      return "Missing";
-    case DEP_STATUS.INCOMPATIBLE:
-      return "Incompatible";
-    default:
-      return "Unresolved";
-  }
 }
 
 export default function WorkflowDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -105,14 +65,6 @@ export default function WorkflowDetailPage({ params }: { params: Promise<{ id: s
   const total = workflow?.totalDependencies || 0;
   const resolved = (workflow?.resolvedLocal || 0) + (workflow?.resolvedWarehouse || 0);
   const progress = total > 0 ? (resolved / total) * 100 : 0;
-
-  // Group dependencies by model type
-  const depsByType = dependencies.reduce((acc, dep) => {
-    const type = dep.modelType || "unknown";
-    if (!acc[type]) acc[type] = [];
-    acc[type].push(dep);
-    return acc;
-  }, {} as Record<string, typeof dependencies>);
 
   if (workflowQuery.isLoading) {
     return (

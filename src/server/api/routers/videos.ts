@@ -574,7 +574,11 @@ export const videosRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      // Sanitize filename to prevent path traversal
+      // Sanitize inputs to prevent path traversal
+      const sanitizedVideoId = path.basename(input.videoId);
+      if (sanitizedVideoId !== input.videoId || sanitizedVideoId.includes('..') || sanitizedVideoId.includes('\0')) {
+        throw new Error("Invalid video ID");
+      }
       const sanitizedFilename = path.basename(input.filename);
       if (sanitizedFilename !== input.filename || sanitizedFilename.includes('..') || sanitizedFilename.includes('\0')) {
         throw new Error("Invalid filename");
@@ -595,7 +599,7 @@ export const videosRouter = router({
       // Create video-specific workflow directory
       const videoWorkflowDir = path.join(
         CONFIG.paths.videoWorkflows,
-        input.videoId
+        sanitizedVideoId
       );
 
       await fs.promises.mkdir(videoWorkflowDir, { recursive: true });
@@ -617,28 +621,28 @@ export const videosRouter = router({
       const now = new Date().toISOString();
 
       try {
-        // Insert workflow record with video-uploaded source
-        db.insert(workflows).values({
-          ...workflow,
-          source: "video-uploaded",
-          updatedAt: now,
-        }).run();
+        // Use transaction to ensure all DB inserts succeed or none do
+        db.transaction((tx) => {
+          tx.insert(workflows).values({
+            ...workflow,
+            source: "video-uploaded",
+            updatedAt: now,
+          }).run();
 
-        // Insert dependencies if any
-        if (dependencies.length > 0) {
-          db.insert(workflowDependencies).values(dependencies).run();
-        }
+          if (dependencies.length > 0) {
+            tx.insert(workflowDependencies).values(dependencies).run();
+          }
 
-        // Link workflow to video
-        db.insert(videoWorkflows)
-          .values({
-            videoId: input.videoId,
-            workflowId: workflow.id,
-            createdAt: now,
-          })
-          .run();
+          tx.insert(videoWorkflows)
+            .values({
+              videoId: input.videoId,
+              workflowId: workflow.id,
+              createdAt: now,
+            })
+            .run();
+        });
 
-        // Auto-tag from the uploaded workflow
+        // Auto-tag from the uploaded workflow (outside transaction - non-critical)
         deriveAutoTagsFromWorkflow(input.videoId, workflow.id);
 
         return {
