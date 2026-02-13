@@ -55,48 +55,6 @@ import {
   BASE_MODELS,
 } from "@/lib/config";
 
-function TagBadge({
-  category,
-  value,
-  source,
-  onRemove,
-}: {
-  category: string;
-  value: string;
-  source: string | null;
-  onRemove?: () => void;
-}) {
-  const colorMap: Record<string, string> = {
-    model_type: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-    base_model: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-    custom: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30",
-  };
-  const classes = colorMap[category] || colorMap.custom;
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium ${classes}`}
-    >
-      {value}
-      {source === "auto" && (
-        <span className="text-[10px] opacity-60">(auto)</span>
-      )}
-      {onRemove && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
-          className="ml-0.5 hover:opacity-70"
-        >
-          <X className="h-3 w-3" />
-        </button>
-      )}
-    </span>
-  );
-}
-
 export default function VideoDetailPage({
   params,
 }: {
@@ -210,6 +168,10 @@ export default function VideoDetailPage({
     // Validate file extension
     if (!file.name.endsWith('.json')) {
       toast.error('Please select a .json workflow file');
+      // Clear file input to allow re-selection
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       return;
     }
 
@@ -223,6 +185,10 @@ export default function VideoDetailPage({
         JSON.parse(content);
       } catch {
         toast.error('Invalid JSON in workflow file');
+        // Clear file input to allow re-selection
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
         return;
       }
 
@@ -876,7 +842,9 @@ export default function VideoDetailPage({
                               className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30"
                             >
                               {tag.value}
-                              <span className="ml-1 text-[10px] opacity-60">(auto)</span>
+                              {tag.source === "auto" && (
+                                <span className="ml-1 text-[10px] opacity-60">(auto)</span>
+                              )}
                             </Badge>
                             <button
                               type="button"
@@ -984,7 +952,7 @@ export default function VideoDetailPage({
                           <SelectValue placeholder="Select tag..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {tagOptions.map((opt) => (
+                          {availableTagOptions.map((opt) => (
                             <SelectItem key={opt} value={opt}>
                               {opt}
                             </SelectItem>
