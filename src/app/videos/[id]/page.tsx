@@ -209,6 +209,9 @@ export default function VideoDetailPage({
 
     reader.onerror = () => {
       toast.error('Failed to read file');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     };
 
     reader.readAsText(file);

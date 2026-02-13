@@ -185,7 +185,13 @@ export function WorkflowDependencyViewer({
                           </span>
                         )}
                         {dep.status === DEP_STATUS.MISSING && dep.civitaiUrl && (
-                          <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0"
+                            onClick={() => dep.civitaiUrl && window.open(dep.civitaiUrl, "_blank", "noopener,noreferrer")}
+                            title="Download from CivitAI"
+                          >
                             <Download className="h-3 w-3" />
                           </Button>
                         )}
@@ -256,7 +262,13 @@ export function WorkflowDependencyViewer({
                 header: "Action",
                 accessor: (dep) =>
                   dep.status === DEP_STATUS.MISSING && dep.civitaiUrl ? (
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0"
+                      onClick={() => dep.civitaiUrl && window.open(dep.civitaiUrl, "_blank", "noopener,noreferrer")}
+                      title="Download from CivitAI"
+                    >
                       <Download className="h-3 w-3" />
                     </Button>
                   ) : null,

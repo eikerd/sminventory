@@ -8,7 +8,9 @@ interface ScanConsoleProps {
   active: boolean;
 }
 
-const PHASE_LABELS: Record<string, string> = {
+type Phase = ScanEvent["phase"];
+
+const PHASE_LABELS: Record<Phase, string> = {
   start: "START",
   parse: "PARSE",
   extract: "EXTRACT",
@@ -19,7 +21,7 @@ const PHASE_LABELS: Record<string, string> = {
   complete: "DONE",
 };
 
-const PHASE_COLORS: Record<string, string> = {
+const PHASE_COLORS: Record<Phase, string> = {
   start: "text-cyan-400",
   parse: "text-blue-400",
   extract: "text-blue-300",

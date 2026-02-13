@@ -210,7 +210,9 @@ export async function findModelFile(
         }
       }
     } catch (error) {
-      console.error(`Error reading directory ${dirPath}:`, error);
+      // Non-fatal: continue searching remaining directories.
+      // Model files can exist in multiple configured paths.
+      console.warn(`Skipping inaccessible directory ${dirPath}:`, error);
     }
   }
 
@@ -346,6 +348,16 @@ export async function generateWorkflowDependencyTree(workflowId: string): Promis
 }
 
 /**
+ * Detect model precision from filename hints
+ */
+function detectPrecision(filename: string): string {
+  const lower = filename.toLowerCase();
+  if (lower.includes("fp8")) return "fp8";
+  if (lower.includes("gguf")) return "gguf";
+  return "unknown";
+}
+
+/**
  * Get tree data as JSON (for API responses and views)
  */
 export async function getWorkflowDependencyTreeData(workflowId: string) {
@@ -368,9 +380,7 @@ export async function getWorkflowDependencyTreeData(workflowId: string) {
         const effectiveSize = node.exists && node.sizeBytes > 0
           ? node.sizeBytes
           : estimateMissingModelSize(modelType, node.name);
-        const precision = node.name.toLowerCase().includes("fp8") ? "fp8"
-          : node.name.toLowerCase().includes("gguf") ? "gguf"
-          : "unknown";
+        const precision = detectPrecision(node.name);
         const vramGB = estimateModelVRAM(modelType, precision, effectiveSize);
         return {
           modelType,
@@ -389,16 +399,11 @@ export async function getWorkflowDependencyTreeData(workflowId: string) {
   );
 
   // Build VRAM estimate from ALL files (using estimates for missing ones)
-  const modelDeps: ModelDependency[] = allFiles.map((f) => {
-    const precision = f.name.toLowerCase().includes("fp8") ? "fp8"
-      : f.name.toLowerCase().includes("gguf") ? "gguf"
-      : "unknown";
-    return {
-      type: f.modelType,
-      precision,
-      sizeBytes: f.sizeBytes,
-    };
-  });
+  const modelDeps: ModelDependency[] = allFiles.map((f) => ({
+    type: f.modelType,
+    precision: detectPrecision(f.name),
+    sizeBytes: f.sizeBytes,
+  }));
   const vramEstimate = estimateWorkflowVRAM(modelDeps);
 
   const summary = {

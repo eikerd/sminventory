@@ -1,11 +1,11 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
 // Screenshot helper for proof of testing
 const screenshotDir = path.join(process.cwd(), 'test-screenshots');
 
-async function captureProofScreenshot(page: any, name: string) {
+async function captureProofScreenshot(page: Page, name: string) {
   const filename = path.join(screenshotDir, `${name}.png`);
   await page.screenshot({ path: filename, fullPage: true });
   console.log(`Proof screenshot saved: ${filename}`);

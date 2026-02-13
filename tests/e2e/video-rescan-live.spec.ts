@@ -1,10 +1,10 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
 
 const SCREENSHOT_DIR = path.join(process.cwd(), "test-screenshots");
 
-async function captureProofScreenshot(page: any, name: string) {
+async function captureProofScreenshot(page: Page, name: string) {
   if (!fs.existsSync(SCREENSHOT_DIR)) {
     fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
   }
@@ -17,8 +17,8 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Live Rescan Experience", () => {
   // Navigate to the first video detail page that has linked workflows
-  async function navigateToVideoWithWorkflows(page: any) {
-    await page.goto("http://localhost:6660/videos");
+  async function navigateToVideoWithWorkflows(page: Page) {
+    await page.goto("/videos");
     await page.waitForLoadState("networkidle");
 
     // Click first video row to navigate to detail page
@@ -26,7 +26,6 @@ test.describe("Live Rescan Experience", () => {
     await firstRow.waitFor({ state: "visible", timeout: 15000 });
     await firstRow.click();
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(1000);
   }
 
   test("should show Rescan button on video detail page", async ({ page }) => {
@@ -93,10 +92,10 @@ test.describe("Live Rescan Experience", () => {
     const entries = page.locator('[data-testid="scan-console-entry"]');
     await expect(entries.first()).toBeVisible({ timeout: 15000 });
 
-    // Wait a bit for more entries to appear progressively
-    await page.waitForTimeout(3000);
+    // Wait for multiple entries to appear
+    await expect(entries.nth(1)).toBeVisible({ timeout: 15000 });
     const entryCount = await entries.count();
-    console.log(`Console entries after 3s: ${entryCount}`);
+    console.log(`Console entries: ${entryCount}`);
     expect(entryCount).toBeGreaterThan(1);
 
     await captureProofScreenshot(page, "scan-progressive-entries");
@@ -116,12 +115,13 @@ test.describe("Live Rescan Experience", () => {
     // Click Rescan
     await rescanBtn.first().click();
 
-    // Wait for console and some entries
+    // Wait for console and check phase entries (these trigger highlights)
     const console_ = page.locator('[data-testid="scan-console"]');
     await expect(console_).toBeVisible({ timeout: 10000 });
 
-    // Wait for check phase entries (these trigger highlights)
-    await page.waitForTimeout(4000);
+    // Wait for CHECK phase entries to appear (they trigger model highlighting)
+    const checkEntry = page.locator('[data-testid="scan-console-entry"]:has-text("[CHECK]")');
+    await expect(checkEntry.first()).toBeVisible({ timeout: 30000 });
 
     // Check if any model name elements have the highlight ring class
     const highlightedElements = page.locator('[data-model-name].ring-2');
@@ -175,7 +175,6 @@ test.describe("Live Rescan Experience", () => {
     // Reload page and verify events persist from DB
     await page.reload();
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
     const persistedConsole = page.locator('[data-testid="scan-console"]');
     await expect(persistedConsole).toBeVisible({ timeout: 10000 });
     const persistedEntries = page.locator('[data-testid="scan-console-entry"]');

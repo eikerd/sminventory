@@ -621,7 +621,7 @@ export const videosRouter = router({
       const now = new Date().toISOString();
 
       try {
-        // Use transaction to ensure all DB inserts succeed or none do
+        // Atomic transaction: workflow + deps + link all succeed or all rollback
         db.transaction((tx) => {
           tx.insert(workflows).values({
             ...workflow,
