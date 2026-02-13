@@ -261,12 +261,20 @@ export async function scanModelsDirectory(
     }
   }
 
+  // Calculate total size from all models in this location
+  const allLocationModels = db
+    .select()
+    .from(models)
+    .where(eq(models.location, options.location))
+    .all();
+  const totalSize = allLocationModels.reduce((sum, m) => sum + m.fileSize, 0);
+
   // Log the scan
   db.insert(scanLog)
     .values({
       path: dirPath,
       fileCount: modelFiles.length,
-      totalSize: modelFiles.length, // TODO: Calculate total size
+      totalSize,
       scannedAt: new Date().toISOString(),
     })
     .run();

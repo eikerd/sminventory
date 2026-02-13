@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
   EyeOff,
   FolderSearch,
   LayoutGrid,
+  CheckCircle,
 } from "lucide-react";
 import { CONFIG } from "@/lib/config";
 import { trpc } from "@/lib/trpc";
@@ -30,10 +31,52 @@ export default function SettingsPage() {
   const [hfKey, setHfKey] = useState("");
   const [googleKey, setGoogleKey] = useState("");
 
-  const saveGoogleApiKey = trpc.videos.saveGoogleApiKey.useMutation({
-    onSuccess: () => toast.success("Google API key saved"),
+  // Load existing key status on mount
+  const apiKeysQuery = trpc.settings.getApiKeys.useQuery();
+
+  useEffect(() => {
+    if (apiKeysQuery.data) {
+      const keys = apiKeysQuery.data;
+      if (keys.civitai_api_key?.exists) {
+        setCivitaiKey("");
+      }
+      if (keys.huggingface_token?.exists) {
+        setHfKey("");
+      }
+      if (keys.google_api_key?.exists) {
+        setGoogleKey("");
+      }
+    }
+  }, [apiKeysQuery.data]);
+
+  // Mutations
+  const saveCivitaiApiKey = trpc.civitai.saveApiKey.useMutation({
+    onSuccess: () => {
+      toast.success("CivitAI API key saved");
+      setCivitaiKey("");
+      apiKeysQuery.refetch();
+    },
     onError: (e) => toast.error(e.message || "Failed to save key"),
   });
+
+  const saveHfApiKey = trpc.settings.saveApiKey.useMutation({
+    onSuccess: () => {
+      toast.success("HuggingFace token saved");
+      setHfKey("");
+      apiKeysQuery.refetch();
+    },
+    onError: (e) => toast.error(e.message || "Failed to save token"),
+  });
+
+  const saveGoogleApiKey = trpc.videos.saveGoogleApiKey.useMutation({
+    onSuccess: () => {
+      toast.success("Google API key saved");
+      setGoogleKey("");
+      apiKeysQuery.refetch();
+    },
+    onError: (e) => toast.error(e.message || "Failed to save key"),
+  });
+
   const [modelsPath, setModelsPath] = useState(CONFIG.paths.models);
   const [warehousePath, setWarehousePath] = useState(CONFIG.paths.warehouse);
   const [workflowPaths, setWorkflowPaths] = useState(CONFIG.paths.workflows);
@@ -47,6 +90,8 @@ export default function SettingsPage() {
       onChange(nextPath.trim());
     }
   };
+
+  const keyStatus = apiKeysQuery.data;
 
   return (
     <div className="flex h-screen">
@@ -72,12 +117,22 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">CivitAI API Key</label>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium">CivitAI API Key</label>
+                  {keyStatus?.civitai_api_key?.exists && (
+                    <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                      <CheckCircle className="h-3 w-3" />
+                      Configured
+                    </Badge>
+                  )}
+                </div>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <Input
                       type={showCivitaiKey ? "text" : "password"}
-                      placeholder="Enter your CivitAI API key"
+                      placeholder={keyStatus?.civitai_api_key?.exists
+                        ? keyStatus.civitai_api_key.maskedValue
+                        : "Enter your CivitAI API key"}
                       value={civitaiKey}
                       onChange={(e) => setCivitaiKey(e.target.value)}
                     />
@@ -94,7 +149,10 @@ export default function SettingsPage() {
                       )}
                     </Button>
                   </div>
-                  <Button>
+                  <Button
+                    onClick={() => saveCivitaiApiKey.mutate({ apiKey: civitaiKey })}
+                    disabled={!civitaiKey || saveCivitaiApiKey.isPending}
+                  >
                     <Save className="h-4 w-4 mr-2" />
                     Save
                   </Button>
@@ -107,12 +165,22 @@ export default function SettingsPage() {
               <Separator />
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">HuggingFace Token</label>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium">HuggingFace Token</label>
+                  {keyStatus?.huggingface_token?.exists && (
+                    <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                      <CheckCircle className="h-3 w-3" />
+                      Configured
+                    </Badge>
+                  )}
+                </div>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <Input
                       type={showHfKey ? "text" : "password"}
-                      placeholder="Enter your HuggingFace token"
+                      placeholder={keyStatus?.huggingface_token?.exists
+                        ? keyStatus.huggingface_token.maskedValue
+                        : "Enter your HuggingFace token"}
                       value={hfKey}
                       onChange={(e) => setHfKey(e.target.value)}
                     />
@@ -129,7 +197,10 @@ export default function SettingsPage() {
                       )}
                     </Button>
                   </div>
-                  <Button>
+                  <Button
+                    onClick={() => saveHfApiKey.mutate({ key: "huggingface_token", value: hfKey })}
+                    disabled={!hfKey || saveHfApiKey.isPending}
+                  >
                     <Save className="h-4 w-4 mr-2" />
                     Save
                   </Button>
@@ -142,13 +213,23 @@ export default function SettingsPage() {
               <Separator />
 
               <div className="space-y-2">
-                <label htmlFor="google-api-key" className="text-sm font-medium">Google API Key (YouTube Data API)</label>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="google-api-key" className="text-sm font-medium">Google API Key (YouTube Data API)</label>
+                  {keyStatus?.google_api_key?.exists && (
+                    <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                      <CheckCircle className="h-3 w-3" />
+                      Configured
+                    </Badge>
+                  )}
+                </div>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <Input
                       id="google-api-key"
                       type={showGoogleKey ? "text" : "password"}
-                      placeholder="Enter your Google API key"
+                      placeholder={keyStatus?.google_api_key?.exists
+                        ? keyStatus.google_api_key.maskedValue
+                        : "Enter your Google API key"}
                       value={googleKey}
                       onChange={(e) => setGoogleKey(e.target.value)}
                     />

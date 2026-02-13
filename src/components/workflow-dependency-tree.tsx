@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, AlertCircle, Loader2, Layers, Table2, Network, Folder, File, Cpu, AlertTriangle } from "lucide-react";
 import { WorkflowDependencyList } from "./workflow-dependency-list";
+import { WorkflowDependencyGraphFiles } from "./workflow-dependency-graph";
 
 type ViewType = "tree" | "table" | "graph";
 
@@ -277,7 +278,6 @@ export function WorkflowDependencyTree({ workflowId, highlightedModel }: Workflo
             size="sm"
             onClick={() => toggleView("graph")}
             className="flex items-center gap-2"
-            disabled
           >
             <Network className="h-4 w-4" />
             Graph View
@@ -304,14 +304,11 @@ export function WorkflowDependencyTree({ workflowId, highlightedModel }: Workflo
             </div>
           )}
 
-          {/* Graph View - Placeholder */}
+          {/* Graph View */}
           {activeViews.includes("graph") && (
             <div className={`flex flex-col min-h-0 ${activeViews.length === 1 ? "flex-1" : "w-1/2"} border rounded-lg overflow-hidden`}>
-              <div className="flex-1 flex items-center justify-center bg-muted/20">
-                <div className="text-center text-muted-foreground">
-                  <Network className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>Graph view coming soon</p>
-                </div>
+              <div className="flex-1" style={{ minHeight: "400px" }}>
+                <WorkflowDependencyGraphFiles files={allFiles} workflowName="Workflow" />
               </div>
             </div>
           )}

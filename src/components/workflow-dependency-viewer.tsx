@@ -21,6 +21,7 @@ import {
 import { DEP_STATUS } from "@/lib/config";
 import { formatBytes } from "@/lib/task-utils";
 import type { VRAMEstimate } from "@/server/services/vram-estimator";
+import { WorkflowDependencyGraphDeps } from "./workflow-dependency-graph";
 
 // Types
 type WorkflowDependency = {
@@ -285,12 +286,11 @@ export function WorkflowDependencyViewer({
 
       {/* Graph View */}
       <TabsContent value="graph" className="mt-4">
-        <div className={`${scrollHeight} flex items-center justify-center border rounded-lg bg-muted/20`}>
-          <div className="text-center text-muted-foreground">
-            <Network className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p>Graph view coming soon</p>
-            <p className="text-sm">Interactive dependency graph</p>
-          </div>
+        <div className={scrollHeight} style={{ minHeight: "400px" }}>
+          <WorkflowDependencyGraphDeps
+            dependencies={dependencies}
+            workflowName={workflow.name || workflow.filename || "Workflow"}
+          />
         </div>
       </TabsContent>
     </Tabs>
