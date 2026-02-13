@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,7 +28,10 @@ import {
   AlertCircle,
   XCircle,
   FileQuestion,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -70,6 +74,30 @@ function ModelsContent() {
       modelsQuery.refetch();
       modelStats.refetch();
     },
+  });
+
+  // CivitAI enrichment
+  const hasApiKey = trpc.civitai.hasApiKey.useQuery();
+
+  const identifyAll = trpc.civitai.identifyAll.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Enrichment complete: ${data.identified} identified, ${data.failed} failed out of ${data.processed}`);
+      modelsQuery.refetch();
+      modelStats.refetch();
+    },
+    onError: (e) => toast.error(e.message || "Enrichment failed"),
+  });
+
+  const identifyModel = trpc.civitai.identifyModel.useMutation({
+    onSuccess: (data) => {
+      if (data.identified) {
+        toast.success(`Identified: ${data.result?.modelName}`);
+      } else {
+        toast.info("Model not found on CivitAI");
+      }
+      modelsQuery.refetch();
+    },
+    onError: (e) => toast.error(e.message || "Lookup failed"),
   });
 
   const models = modelsQuery.data?.models || [];
@@ -144,8 +172,8 @@ function ModelsContent() {
           </div>
 
           {/* Filters */}
-          <div className="flex gap-4">
-            <div className="relative flex-1">
+          <div className="flex gap-4 flex-wrap">
+            <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search models..."
@@ -179,6 +207,30 @@ function ModelsContent() {
                 ))}
               </SelectContent>
             </Select>
+
+            {/* CivitAI Enrich Button */}
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!hasApiKey.data?.hasKey) {
+                  toast.error("Set your CivitAI API key in Settings first");
+                  return;
+                }
+                identifyAll.mutate({ onlyUnidentified: true, limit: 50 });
+              }}
+              disabled={identifyAll.isPending || hasApiKey.isLoading}
+            >
+              {identifyAll.isPending || hasApiKey.isLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4 mr-2" />
+              )}
+              {hasApiKey.isLoading
+                ? "Checking..."
+                : identifyAll.isPending
+                ? "Enriching..."
+                : "Enrich with CivitAI"}
+            </Button>
           </div>
 
           {/* Model List */}
@@ -220,7 +272,7 @@ function ModelsContent() {
                       ),
                       sortKey: "filename",
                       sortable: true,
-                      className: "w-[30%]",
+                      className: "w-[25%]",
                     },
                     {
                       header: "Type",
@@ -229,7 +281,7 @@ function ModelsContent() {
                       ),
                       sortKey: "detectedType",
                       sortable: true,
-                      className: "w-[15%]",
+                      className: "w-[10%]",
                     },
                     {
                       header: "Architecture",
@@ -238,7 +290,31 @@ function ModelsContent() {
                       ),
                       sortKey: "detectedArchitecture",
                       sortable: true,
+                      className: "w-[10%]",
+                    },
+                    {
+                      header: "CivitAI Name",
+                      accessor: (model) =>
+                        model.civitaiName ? (
+                          <span className="text-sm">{model.civitaiName}</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        ),
+                      sortKey: "civitaiName",
+                      sortable: true,
                       className: "w-[15%]",
+                    },
+                    {
+                      header: "Base Model",
+                      accessor: (model) =>
+                        model.civitaiBaseModel ? (
+                          <Badge variant="outline" className="text-xs">{model.civitaiBaseModel}</Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        ),
+                      sortKey: "civitaiBaseModel",
+                      sortable: true,
+                      className: "w-[10%]",
                     },
                     {
                       header: "Location",
@@ -253,7 +329,7 @@ function ModelsContent() {
                       ),
                       sortKey: "location",
                       sortable: true,
-                      className: "w-[12%]",
+                      className: "w-[10%]",
                     },
                     {
                       header: "Size",
@@ -264,12 +340,34 @@ function ModelsContent() {
                       ),
                       sortKey: "fileSize",
                       sortable: true,
-                      className: "w-[12%]",
+                      className: "w-[8%]",
                     },
                     {
-                      header: "Status",
-                      accessor: (model) => getHashStatusIcon(model.hashStatus),
-                      className: "w-[8%]",
+                      header: "",
+                      accessor: (model) => (
+                        <div className="flex items-center gap-1">
+                          {getHashStatusIcon(model.hashStatus)}
+                          {!model.civitaiModelId && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs"
+                              onClick={() => {
+                                if (!hasApiKey.data?.hasKey) {
+                                  toast.error("Set your CivitAI API key in Settings first");
+                                  return;
+                                }
+                                identifyModel.mutate({ modelId: model.id });
+                              }}
+                              disabled={identifyModel.isPending || hasApiKey.isLoading}
+                              title="Lookup on CivitAI"
+                            >
+                              <Sparkles className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      ),
+                      className: "w-[6%]",
                     },
                   ]}
                   data={models}
@@ -300,6 +398,9 @@ function ModelsContent() {
                         <div className="flex items-center gap-2 shrink-0">
                           <Badge variant="outline">{model.detectedType || "unknown"}</Badge>
                           <Badge variant="secondary">{model.detectedArchitecture || "?"}</Badge>
+                          {model.civitaiBaseModel && (
+                            <Badge variant="outline" className="text-xs">{model.civitaiBaseModel}</Badge>
+                          )}
                           <Badge variant={model.location === "local" ? "default" : "outline"}>
                             {model.location === "local" ? (
                               <><HardDrive className="h-3 w-3 mr-1" /> Local</>
@@ -310,6 +411,24 @@ function ModelsContent() {
                           <span className="text-sm text-muted-foreground w-20 text-right">
                             {formatBytes(model.fileSize)}
                           </span>
+                          {!model.civitaiModelId && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2"
+                              onClick={() => {
+                                if (!hasApiKey.data?.hasKey) {
+                                  toast.error("Set your CivitAI API key in Settings first");
+                                  return;
+                                }
+                                identifyModel.mutate({ modelId: model.id });
+                              }}
+                              disabled={identifyModel.isPending || hasApiKey.isLoading}
+                              title="Lookup on CivitAI"
+                            >
+                              <Sparkles className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))}

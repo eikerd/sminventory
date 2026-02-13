@@ -2,7 +2,7 @@ import { z } from "zod";
 import { router, publicProcedure } from "../trpc";
 import { db } from "@/server/db";
 import { models } from "@/server/db/schema";
-import { eq, like, and, or } from "drizzle-orm";
+import { eq, like, and, or, count } from "drizzle-orm";
 import { scanAllModels, scanModelsDirectory, getModelStats } from "@/server/services/model-indexer";
 import { analyzeModel } from "@/server/services/forensics";
 import { CONFIG } from "@/lib/config";
@@ -72,7 +72,13 @@ export const modelsRouter = router({
       const offset = filters.offset || 0;
       
       const results = query.limit(limit).offset(offset).all();
-      const total = db.select().from(models).all().length; // TODO: Optimize count
+
+      // Count query respects the same filters
+      let countQuery = db.select({ count: count() }).from(models);
+      if (conditions.length > 0) {
+        countQuery = countQuery.where(and(...conditions)) as typeof countQuery;
+      }
+      const total = countQuery.get()?.count ?? 0;
 
       return {
         models: results,

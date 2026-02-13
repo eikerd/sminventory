@@ -6,7 +6,7 @@ import { db } from "@/server/db";
 import { models, scanLog, type NewModel } from "@/server/db/schema";
 import { CONFIG, HASH_STATUS } from "@/lib/config";
 import { analyzeModel, quickScanModel, calculatePartialHash } from "./forensics";
-import { eq } from "drizzle-orm";
+import { eq, sum } from "drizzle-orm";
 
 const MODEL_EXTENSIONS = new Set(CONFIG.modelExtensions);
 
@@ -261,12 +261,21 @@ export async function scanModelsDirectory(
     }
   }
 
+  // Total size of all models in this location (not just this directory), since
+  // locations like "local" may span multiple subdirectories under one root
+  const sizeResult = db
+    .select({ total: sum(models.fileSize) })
+    .from(models)
+    .where(eq(models.location, options.location))
+    .get();
+  const totalSize = sizeResult?.total ? Number(sizeResult.total) : 0;
+
   // Log the scan
   db.insert(scanLog)
     .values({
       path: dirPath,
       fileCount: modelFiles.length,
-      totalSize: modelFiles.length, // TODO: Calculate total size
+      totalSize,
       scannedAt: new Date().toISOString(),
     })
     .run();
