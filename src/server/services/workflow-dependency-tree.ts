@@ -194,7 +194,9 @@ export async function findModelFile(
         const entries = await fs.readdir(dirPath, { withFileTypes: true });
 
         for (const entry of entries) {
-          if (entry.name === modelName || entry.name.includes(modelName)) {
+          // Exact match or match without extension to avoid false positives
+          const nameWithoutExt = path.parse(modelName).name;
+          if (entry.name === modelName || entry.name.startsWith(nameWithoutExt)) {
             const entryPath = path.join(dirPath, entry.name);
             const stats = await fs.stat(entryPath);
             return {
@@ -349,12 +351,13 @@ export async function getWorkflowDependencyTreeData(workflowId: string) {
   const groups = await groupDependenciesByType(workflowId);
   const totalSize = calculateTotalSize(groups);
 
-  // Debug logging
-  console.log(`[DepTree] Workflow ${workflowId}:`, {
-    groupKeys: Object.keys(groups),
-    filesPerType: Object.entries(groups).map(([type, files]) => ({ type, count: files.length })),
-    totalSize,
-  });
+  if (process.env.NODE_ENV === "development") {
+    console.log(`[DepTree] Workflow ${workflowId}:`, {
+      groupKeys: Object.keys(groups),
+      filesPerType: Object.entries(groups).map(([type, files]) => ({ type, count: files.length })),
+      totalSize,
+    });
+  }
 
   const allFiles = await Promise.all(
     Object.entries(groups).flatMap(([modelType, nodes]) =>

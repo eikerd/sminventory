@@ -185,14 +185,9 @@ function extractResolution(workflow: ComfyUIWorkflow): {
     }
   }
 
-  // Fallback: look for LoadImage node
-  if (!resolution.width && !resolution.height) {
-    const loadImageNode = workflow.nodes.find((n) => n.type === "LoadImage");
-    if (loadImageNode) {
-      // LoadImage doesn't directly give resolution, but we can infer it's an img2img workflow
-      // We'll leave width/height empty in this case
-    }
-  }
+  // Note: LoadImage nodes don't directly provide resolution info.
+  // If no EmptyLatentImage is found, this is likely an img2img workflow
+  // and resolution depends on the input image at runtime.
 
   return resolution;
 }
