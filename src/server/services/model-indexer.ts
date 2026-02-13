@@ -261,7 +261,8 @@ export async function scanModelsDirectory(
     }
   }
 
-  // Calculate total size from all models in this location
+  // Total size of all models in this location (not just this directory), since
+  // locations like "local" may span multiple subdirectories under one root
   const allLocationModels = db
     .select()
     .from(models)

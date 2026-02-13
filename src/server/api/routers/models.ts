@@ -72,7 +72,13 @@ export const modelsRouter = router({
       const offset = filters.offset || 0;
       
       const results = query.limit(limit).offset(offset).all();
-      const total = db.select({ count: count() }).from(models).get()?.count ?? 0;
+
+      // Count query respects the same filters
+      let countQuery = db.select({ count: count() }).from(models);
+      if (conditions.length > 0) {
+        countQuery = countQuery.where(and(...conditions)) as typeof countQuery;
+      }
+      const total = countQuery.get()?.count ?? 0;
 
       return {
         models: results,

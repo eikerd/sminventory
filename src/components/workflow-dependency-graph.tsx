@@ -15,19 +15,11 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { DEP_STATUS } from "@/lib/config";
+import { formatBytes } from "@/lib/task-utils";
+import type { DependencyFile } from "@/types/workflow-dependencies";
 
-// Types matching what the parent components provide
-interface DependencyFile {
-  modelType: string;
-  displayName: string;
-  name: string;
-  size: string;
-  sizeBytes: number;
-  path: string;
-  exists: boolean;
-  emoji: string;
-  vramGB?: number;
-}
+// Extend shared type with optional vramGB used by tree component
+type DependencyFileWithVram = DependencyFile & { vramGB?: number };
 
 type WorkflowDependency = {
   workflowId: string;
@@ -43,6 +35,14 @@ type WorkflowDependency = {
   expectedArchitecture: string | null;
   compatibilityIssue: string | null;
 };
+
+// Normalized item for the generic graph builder
+interface GraphItem {
+  type: string;
+  name: string;
+  statusColor: string;
+  size: string;
+}
 
 // Color mapping for status
 function getStatusColor(status: string | null | boolean): string {
@@ -158,16 +158,11 @@ const nodeTypes: NodeTypes = {
   model: ModelNode,
 };
 
-function formatBytes(bytes: number): string {
-  if (!bytes || bytes === 0) return "";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
-}
-
-// Build graph from DependencyFile[] (used by workflow-dependency-tree.tsx)
-function buildGraphFromFiles(files: DependencyFile[], workflowName: string): { nodes: Node[]; edges: Edge[] } {
+// Generic graph builder for both data shapes
+function buildGraph(
+  items: GraphItem[],
+  workflowName: string,
+): { nodes: Node[]; edges: Edge[] } {
   const nodes: Node[] = [];
   const edges: Edge[] = [];
 
@@ -179,89 +174,11 @@ function buildGraphFromFiles(files: DependencyFile[], workflowName: string): { n
     data: { label: workflowName },
   });
 
-  // Group by model type
-  const grouped: Record<string, DependencyFile[]> = {};
-  for (const file of files) {
-    if (!grouped[file.modelType]) grouped[file.modelType] = [];
-    grouped[file.modelType].push(file);
-  }
-
-  const types = Object.keys(grouped);
-  const groupWidth = 220;
-  const totalWidth = types.length * groupWidth;
-  const startX = -totalWidth / 2 + groupWidth / 2;
-
-  types.forEach((type, typeIdx) => {
-    const groupId = `group-${type}`;
-    const gx = startX + typeIdx * groupWidth;
-    const color = getTypeColor(type);
-
-    nodes.push({
-      id: groupId,
-      type: "group",
-      position: { x: gx, y: 120 },
-      data: { label: type, color, count: grouped[type].length },
-    });
-
-    edges.push({
-      id: `e-workflow-${groupId}`,
-      source: "workflow",
-      target: groupId,
-      style: { stroke: color, strokeWidth: 2 },
-      animated: false,
-    });
-
-    // Individual models
-    const typeFiles = grouped[type];
-    const modelWidth = 180;
-    const totalModelWidth = typeFiles.length * modelWidth;
-    const modelStartX = gx - totalModelWidth / 2 + modelWidth / 2;
-
-    typeFiles.forEach((file, fileIdx) => {
-      const modelId = `model-${type}-${fileIdx}`;
-      const mx = modelStartX + fileIdx * modelWidth;
-      const statusColor = getStatusColor(file.exists);
-
-      nodes.push({
-        id: modelId,
-        type: "model",
-        position: { x: mx, y: 240 },
-        data: {
-          label: file.name,
-          status: file.exists ? "found" : "missing",
-          size: file.size,
-          statusColor,
-        },
-      });
-
-      edges.push({
-        id: `e-${groupId}-${modelId}`,
-        source: groupId,
-        target: modelId,
-        style: { stroke: statusColor, strokeWidth: 1.5 },
-      });
-    });
-  });
-
-  return { nodes, edges };
-}
-
-// Build graph from WorkflowDependency[] (used by workflow-dependency-viewer.tsx)
-function buildGraphFromDeps(deps: WorkflowDependency[], workflowName: string): { nodes: Node[]; edges: Edge[] } {
-  const nodes: Node[] = [];
-  const edges: Edge[] = [];
-
-  nodes.push({
-    id: "workflow",
-    type: "workflow",
-    position: { x: 0, y: 0 },
-    data: { label: workflowName },
-  });
-
-  const grouped: Record<string, WorkflowDependency[]> = {};
-  for (const dep of deps) {
-    if (!grouped[dep.modelType]) grouped[dep.modelType] = [];
-    grouped[dep.modelType].push(dep);
+  // Group by type
+  const grouped: Record<string, GraphItem[]> = {};
+  for (const item of items) {
+    if (!grouped[item.type]) grouped[item.type] = [];
+    grouped[item.type].push(item);
   }
 
   const types = Object.keys(grouped);
@@ -288,25 +205,25 @@ function buildGraphFromDeps(deps: WorkflowDependency[], workflowName: string): {
       style: { stroke: color, strokeWidth: 2 },
     });
 
-    const typeDeps = grouped[type];
+    // Individual models
+    const typeItems = grouped[type];
     const modelWidth = 180;
-    const totalModelWidth = typeDeps.length * modelWidth;
+    const totalModelWidth = typeItems.length * modelWidth;
     const modelStartX = gx - totalModelWidth / 2 + modelWidth / 2;
 
-    typeDeps.forEach((dep, depIdx) => {
-      const modelId = `model-${type}-${depIdx}`;
-      const mx = modelStartX + depIdx * modelWidth;
-      const statusColor = getStatusColor(dep.status);
+    typeItems.forEach((item, itemIdx) => {
+      const modelId = `model-${type}-${itemIdx}`;
+      const mx = modelStartX + itemIdx * modelWidth;
 
       nodes.push({
         id: modelId,
         type: "model",
         position: { x: mx, y: 240 },
         data: {
-          label: dep.modelName,
-          status: dep.status || "unresolved",
-          size: dep.estimatedSize ? formatBytes(dep.estimatedSize) : "",
-          statusColor,
+          label: item.name,
+          status: "resolved",
+          size: item.size,
+          statusColor: item.statusColor,
         },
       });
 
@@ -314,7 +231,7 @@ function buildGraphFromDeps(deps: WorkflowDependency[], workflowName: string): {
         id: `e-${groupId}-${modelId}`,
         source: groupId,
         target: modelId,
-        style: { stroke: statusColor, strokeWidth: 1.5 },
+        style: { stroke: item.statusColor, strokeWidth: 1.5 },
       });
     });
   });
@@ -323,16 +240,12 @@ function buildGraphFromDeps(deps: WorkflowDependency[], workflowName: string): {
 }
 
 // Inner component that can use useReactFlow
-function GraphInner({
-  nodes,
-  edges,
-}: {
-  nodes: Node[];
-  edges: Edge[];
-}) {
+function GraphInner({ nodes, edges }: { nodes: Node[]; edges: Edge[] }) {
   const { fitView } = useReactFlow();
 
   const onInit = useCallback(() => {
+    // Delay required: nodes may not be fully rendered when onInit fires,
+    // causing fitView to compute incorrect bounds
     setTimeout(() => fitView({ padding: 0.2 }), 50);
   }, [fitView]);
 
@@ -345,9 +258,7 @@ function GraphInner({
       fitView
       minZoom={0.3}
       maxZoom={2}
-      defaultEdgeOptions={{
-        type: "smoothstep",
-      }}
+      defaultEdgeOptions={{ type: "smoothstep" }}
       proOptions={{ hideAttribution: true }}
     >
       <Background gap={20} size={1} />
@@ -361,10 +272,18 @@ export function WorkflowDependencyGraphFiles({
   files,
   workflowName = "Workflow",
 }: {
-  files: DependencyFile[];
+  files: DependencyFileWithVram[];
   workflowName?: string;
 }) {
-  const { nodes, edges } = useMemo(() => buildGraphFromFiles(files, workflowName), [files, workflowName]);
+  const { nodes, edges } = useMemo(() => {
+    const items: GraphItem[] = files.map((f) => ({
+      type: f.modelType,
+      name: f.name,
+      statusColor: getStatusColor(f.exists),
+      size: f.size,
+    }));
+    return buildGraph(items, workflowName);
+  }, [files, workflowName]);
 
   return (
     <ReactFlowProvider>
@@ -381,7 +300,15 @@ export function WorkflowDependencyGraphDeps({
   dependencies: WorkflowDependency[];
   workflowName?: string;
 }) {
-  const { nodes, edges } = useMemo(() => buildGraphFromDeps(dependencies, workflowName), [dependencies, workflowName]);
+  const { nodes, edges } = useMemo(() => {
+    const items: GraphItem[] = dependencies.map((d) => ({
+      type: d.modelType,
+      name: d.modelName,
+      statusColor: getStatusColor(d.status),
+      size: d.estimatedSize ? formatBytes(d.estimatedSize) : "",
+    }));
+    return buildGraph(items, workflowName);
+  }, [dependencies, workflowName]);
 
   return (
     <ReactFlowProvider>

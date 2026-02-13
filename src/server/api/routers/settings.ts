@@ -2,14 +2,25 @@ import { z } from "zod";
 import { router, publicProcedure } from "../trpc";
 import { db } from "@/server/db";
 import { settings } from "@/server/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
+
+const VALID_KEYS = ["civitai_api_key", "huggingface_token", "google_api_key"] as const;
+
+function maskApiKey(value: string): string {
+  return value.length > 4
+    ? "\u2022".repeat(Math.min(value.length - 4, 20)) + value.slice(-4)
+    : "\u2022".repeat(value.length);
+}
 
 export const settingsRouter = router({
   // Save any API key by key name
   saveApiKey: publicProcedure
-    .input(z.object({ key: z.string(), value: z.string().min(1) }))
+    .input(z.object({
+      key: z.enum(VALID_KEYS),
+      value: z.string().min(1),
+    }))
     .mutation(({ input }) => {
-      db.insert(settings)
+      const result = db.insert(settings)
         .values({
           key: input.key,
           value: input.value,
@@ -25,39 +36,35 @@ export const settingsRouter = router({
         })
         .run();
 
-      return { success: true };
+      return { success: result.changes > 0 };
     }),
 
   // Get a single API key status (masked)
   getApiKey: publicProcedure
-    .input(z.object({ key: z.string() }))
+    .input(z.object({ key: z.enum(VALID_KEYS) }))
     .query(({ input }) => {
       const setting = db.select().from(settings).where(eq(settings.key, input.key)).get();
       if (!setting?.value) {
         return { exists: false, maskedValue: "" };
       }
-      const val = setting.value;
-      const masked = val.length > 4
-        ? "\u2022".repeat(Math.min(val.length - 4, 20)) + val.slice(-4)
-        : "\u2022".repeat(val.length);
-      return { exists: true, maskedValue: masked };
+      return { exists: true, maskedValue: maskApiKey(setting.value) };
     }),
 
-  // Get status of all configured API keys
+  // Get status of all configured API keys (single batched query)
   getApiKeys: publicProcedure.query(() => {
-    const keys = ["civitai_api_key", "huggingface_token", "google_api_key"];
+    const keys = [...VALID_KEYS];
     const result: Record<string, { exists: boolean; maskedValue: string }> = {};
 
+    // Initialize all keys as not existing
     for (const key of keys) {
-      const setting = db.select().from(settings).where(eq(settings.key, key)).get();
-      if (setting?.value) {
-        const val = setting.value;
-        const masked = val.length > 4
-          ? "\u2022".repeat(Math.min(val.length - 4, 20)) + val.slice(-4)
-          : "\u2022".repeat(val.length);
-        result[key] = { exists: true, maskedValue: masked };
-      } else {
-        result[key] = { exists: false, maskedValue: "" };
+      result[key] = { exists: false, maskedValue: "" };
+    }
+
+    // Single batched query
+    const rows = db.select().from(settings).where(inArray(settings.key, keys)).all();
+    for (const row of rows) {
+      if (row.value) {
+        result[row.key] = { exists: true, maskedValue: maskApiKey(row.value) };
       }
     }
 

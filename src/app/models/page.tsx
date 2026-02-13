@@ -218,14 +218,18 @@ function ModelsContent() {
                 }
                 identifyAll.mutate({ onlyUnidentified: true, limit: 50 });
               }}
-              disabled={identifyAll.isPending}
+              disabled={identifyAll.isPending || hasApiKey.isLoading}
             >
-              {identifyAll.isPending ? (
+              {identifyAll.isPending || hasApiKey.isLoading ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
                 <Sparkles className="h-4 w-4 mr-2" />
               )}
-              {identifyAll.isPending ? "Enriching..." : "Enrich with CivitAI"}
+              {hasApiKey.isLoading
+                ? "Checking..."
+                : identifyAll.isPending
+                ? "Enriching..."
+                : "Enrich with CivitAI"}
             </Button>
           </div>
 
@@ -355,7 +359,7 @@ function ModelsContent() {
                                 }
                                 identifyModel.mutate({ modelId: model.id });
                               }}
-                              disabled={identifyModel.isPending}
+                              disabled={identifyModel.isPending || hasApiKey.isLoading}
                               title="Lookup on CivitAI"
                             >
                               <Sparkles className="h-3 w-3" />

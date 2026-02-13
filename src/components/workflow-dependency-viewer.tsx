@@ -286,7 +286,7 @@ export function WorkflowDependencyViewer({
 
       {/* Graph View */}
       <TabsContent value="graph" className="mt-4">
-        <div className={scrollHeight} style={{ minHeight: "400px" }}>
+        <div className={scrollHeight} style={{ minHeight: compact ? "300px" : "400px" }}>
           <WorkflowDependencyGraphDeps
             dependencies={dependencies}
             workflowName={workflow.name || workflow.filename || "Workflow"}
