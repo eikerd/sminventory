@@ -403,45 +403,65 @@ export const videosRouter = router({
       const now = new Date().toISOString();
 
       // Insert video record with comprehensive metadata
-      db.insert(videos)
-        .values({
-          id,
-          url: input.url,
-          // Basic metadata
-          title: metadata.title,
-          description: metadata.description,
-          channelName: metadata.channelName,
-          channelId: metadata.source === 'data_api' ? (metadata as any).channelId : null,
-          publishedAt: metadata.publishedAt,
-          thumbnailUrl: metadata.thumbnailUrl,
-          duration: metadata.duration,
-          // Statistics
-          viewCount: metadata.source === 'data_api' ? (metadata as any).viewCount : null,
-          likeCount: metadata.source === 'data_api' ? (metadata as any).likeCount : null,
-          commentCount: metadata.source === 'data_api' ? (metadata as any).commentCount : null,
-          // Status
-          uploadStatus: metadata.source === 'data_api' ? (metadata as any).uploadStatus : null,
-          privacyStatus: metadata.source === 'data_api' ? (metadata as any).privacyStatus : null,
-          license: metadata.source === 'data_api' ? (metadata as any).license : null,
-          embeddable: metadata.source === 'data_api' ? ((metadata as any).embeddable ? 1 : 0) : null,
-          publicStatsViewable: metadata.source === 'data_api' ? ((metadata as any).publicStatsViewable ? 1 : 0) : null,
-          madeForKids: metadata.source === 'data_api' ? ((metadata as any).madeForKids ? 1 : 0) : null,
-          // Content details
-          dimension: metadata.source === 'data_api' ? (metadata as any).dimension : null,
-          definition: metadata.source === 'data_api' ? (metadata as any).definition : null,
-          caption: metadata.source === 'data_api' ? ((metadata as any).caption ? 1 : 0) : null,
-          licensedContent: metadata.source === 'data_api' ? ((metadata as any).licensedContent ? 1 : 0) : null,
-          projection: metadata.source === 'data_api' ? (metadata as any).projection : null,
-          // Topic details
-          topicCategories: metadata.source === 'data_api' ? JSON.stringify((metadata as any).topicCategories || []) : null,
-          // Recording details
-          recordingDate: metadata.source === 'data_api' ? (metadata as any).recordingDate : null,
-          locationDescription: metadata.source === 'data_api' ? (metadata as any).locationDescription : null,
-          // Timestamps
-          createdAt: now,
-          updatedAt: now,
-        })
-        .run();
+      // Use type narrowing for proper type safety
+      const videoData: any = {
+        id,
+        url: input.url,
+        // Basic metadata (common to both sources)
+        title: metadata.title,
+        description: metadata.description,
+        channelName: metadata.channelName,
+        publishedAt: metadata.publishedAt,
+        thumbnailUrl: metadata.thumbnailUrl,
+        duration: metadata.duration,
+        // Timestamps
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      // Add Data API-specific fields if source is data_api
+      if (metadata.source === 'data_api') {
+        videoData.channelId = metadata.channelId;
+        videoData.viewCount = metadata.viewCount;
+        videoData.likeCount = metadata.likeCount;
+        videoData.commentCount = metadata.commentCount;
+        videoData.uploadStatus = metadata.uploadStatus;
+        videoData.privacyStatus = metadata.privacyStatus;
+        videoData.license = metadata.license;
+        videoData.embeddable = metadata.embeddable !== null ? (metadata.embeddable ? 1 : 0) : null;
+        videoData.publicStatsViewable = metadata.publicStatsViewable !== null ? (metadata.publicStatsViewable ? 1 : 0) : null;
+        videoData.madeForKids = metadata.madeForKids !== null ? (metadata.madeForKids ? 1 : 0) : null;
+        videoData.dimension = metadata.dimension;
+        videoData.definition = metadata.definition;
+        videoData.caption = metadata.caption !== null ? (metadata.caption ? 1 : 0) : null;
+        videoData.licensedContent = metadata.licensedContent !== null ? (metadata.licensedContent ? 1 : 0) : null;
+        videoData.projection = metadata.projection;
+        videoData.topicCategories = metadata.topicCategories ? JSON.stringify(metadata.topicCategories) : null;
+        videoData.recordingDate = metadata.recordingDate;
+        videoData.locationDescription = metadata.locationDescription;
+      } else {
+        // oEmbed source - set Data API fields to null
+        videoData.channelId = null;
+        videoData.viewCount = null;
+        videoData.likeCount = null;
+        videoData.commentCount = null;
+        videoData.uploadStatus = null;
+        videoData.privacyStatus = null;
+        videoData.license = null;
+        videoData.embeddable = null;
+        videoData.publicStatsViewable = null;
+        videoData.madeForKids = null;
+        videoData.dimension = null;
+        videoData.definition = null;
+        videoData.caption = null;
+        videoData.licensedContent = null;
+        videoData.projection = null;
+        videoData.topicCategories = null;
+        videoData.recordingDate = null;
+        videoData.locationDescription = null;
+      }
+
+      db.insert(videos).values(videoData).run();
 
       // Insert scraped URLs from description
       if (metadata.descriptionUrls.length > 0) {
@@ -566,66 +586,86 @@ export const videosRouter = router({
     )
     .mutation(async ({ input }) => {
       try {
-      // Validate JSON
-      let workflowJson;
-      try {
-        workflowJson = JSON.parse(input.content);
-      } catch (e) {
-        throw new Error("Invalid JSON file");
-      }
+        // Sanitize filename to prevent path traversal
+        const sanitizedFilename = path.basename(input.filename);
+        if (sanitizedFilename !== input.filename || sanitizedFilename.includes('..') || sanitizedFilename.includes('\0')) {
+          throw new Error("Invalid filename");
+        }
 
-      // Create video-specific workflow directory
-      const videoWorkflowDir = path.join(
-        CONFIG.paths.videoWorkflows,
-        input.videoId
-      );
-      if (!fs.existsSync(videoWorkflowDir)) {
-        fs.mkdirSync(videoWorkflowDir, { recursive: true });
-      }
+        // Validate filename extension
+        if (!sanitizedFilename.endsWith('.json')) {
+          throw new Error("Only .json files are allowed");
+        }
 
-      // Save workflow file
-      const filepath = path.join(videoWorkflowDir, input.filename);
-      fs.writeFileSync(filepath, input.content, "utf8");
+        // Validate JSON
+        try {
+          JSON.parse(input.content);
+        } catch (e) {
+          console.error("Invalid JSON in uploaded workflow:", e);
+          throw new Error("Invalid JSON file");
+        }
 
-      // Parse workflow file to get workflow and dependencies data
-      const parsed = await parseWorkflowFile(filepath);
+        // Create video-specific workflow directory
+        const videoWorkflowDir = path.join(
+          CONFIG.paths.videoWorkflows,
+          input.videoId
+        );
 
-      if (!parsed) {
-        throw new Error("Failed to parse workflow file");
-      }
+        // Use async filesystem operations
+        await fs.promises.mkdir(videoWorkflowDir, { recursive: true });
 
-      const { workflow, dependencies } = parsed;
-      const now = new Date().toISOString();
+        // Save workflow file
+        const filepath = path.join(videoWorkflowDir, sanitizedFilename);
+        await fs.promises.writeFile(filepath, input.content, "utf8");
 
-      // Insert workflow record with video-uploaded source
-      db.insert(workflows).values({
-        ...workflow,
-        source: "video-uploaded",
-        updatedAt: now,
-      }).run();
+        // Parse workflow file to get workflow and dependencies data
+        const parsed = await parseWorkflowFile(filepath);
 
-      // Insert dependencies if any
-      if (dependencies.length > 0) {
-        db.insert(workflowDependencies).values(dependencies).run();
-      }
+        if (!parsed) {
+          // Clean up orphaned file if parsing fails
+          await fs.promises.unlink(filepath).catch(() => {});
+          throw new Error("Failed to parse workflow file");
+        }
 
-      // Link workflow to video
-      db.insert(videoWorkflows)
-        .values({
-          videoId: input.videoId,
-          workflowId: workflow.id,
-          createdAt: now,
-        })
-        .run();
+        const { workflow, dependencies } = parsed;
+        const now = new Date().toISOString();
 
-      // Auto-tag from the uploaded workflow
-      deriveAutoTagsFromWorkflow(input.videoId, workflow.id);
+        try {
+          // Insert workflow record with video-uploaded source
+          db.insert(workflows).values({
+            ...workflow,
+            source: "video-uploaded",
+            updatedAt: now,
+          }).run();
 
-      return {
-        workflowId: workflow.id,
-        filepath,
-        dependencyCount: dependencies.length,
-      };
+          // Insert dependencies if any
+          if (dependencies.length > 0) {
+            db.insert(workflowDependencies).values(dependencies).run();
+          }
+
+          // Link workflow to video
+          db.insert(videoWorkflows)
+            .values({
+              videoId: input.videoId,
+              workflowId: workflow.id,
+              createdAt: now,
+            })
+            .run();
+
+          // Auto-tag from the uploaded workflow
+          deriveAutoTagsFromWorkflow(input.videoId, workflow.id);
+
+          return {
+            workflowId: workflow.id,
+            filepath,
+            dependencyCount: dependencies.length,
+          };
+        } catch (dbError) {
+          console.error("Database error while saving uploaded workflow:", dbError);
+          // Clean up orphaned file if database operation fails
+          await fs.promises.unlink(filepath).catch(() => {});
+          throw new Error("Failed to save workflow to database");
+        }
       } catch (error) {
         console.error("Upload workflow error:", error);
         throw error;

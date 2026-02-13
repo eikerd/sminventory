@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import path from 'path';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -174,7 +175,7 @@ test.describe('Video Detail Page - Enhanced Workflow Features', () => {
     const fileChooser = await fileChooserPromise;
 
     // Upload the test workflow file
-    await fileChooser.setFiles('/mnt/e/Sminventory/test-workflow.json');
+    await fileChooser.setFiles(path.resolve(__dirname, '../../test-workflow.json'));
 
     // Wait for upload to complete
     await page.waitForTimeout(3000);
@@ -391,7 +392,7 @@ test.describe('Workflow Parser Enhancement - Metadata Extraction', () => {
       const fileChooserPromise = page.waitForEvent('filechooser');
       await addButton.click();
       const fileChooser = await fileChooserPromise;
-      await fileChooser.setFiles('/mnt/e/Sminventory/test-workflow.json');
+      await fileChooser.setFiles(path.resolve(__dirname, '../../test-workflow.json'));
       await page.waitForTimeout(3000);
 
       // Navigate to the workflow detail page to see full metadata

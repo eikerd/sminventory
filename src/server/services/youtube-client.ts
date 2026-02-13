@@ -61,7 +61,8 @@ export interface YouTubeVideoDetails {
   locationDescription: string | null;
 }
 
-export interface ScrapeResult {
+// Base metadata fields common to both sources
+interface BaseVideoMetadata {
   title: string | null;
   description: string | null;
   channelName: string | null;
@@ -69,8 +70,41 @@ export interface ScrapeResult {
   thumbnailUrl: string | null;
   duration: string | null;
   descriptionUrls: string[];
-  source: "data_api" | "oembed";
 }
+
+// oEmbed metadata (free, no API key required)
+export interface OEmbedMetadata extends BaseVideoMetadata {
+  source: "oembed";
+}
+
+// YouTube Data API metadata (requires API key, includes comprehensive stats)
+export interface DataApiMetadata extends BaseVideoMetadata {
+  source: "data_api";
+  channelId: string | null;
+  viewCount: number | null;
+  likeCount: number | null;
+  commentCount: number | null;
+  uploadStatus: string | null;
+  privacyStatus: string | null;
+  license: string | null;
+  embeddable: boolean | null;
+  publicStatsViewable: boolean | null;
+  madeForKids: boolean | null;
+  dimension: string | null;
+  definition: string | null;
+  caption: boolean | null;
+  licensedContent: boolean | null;
+  projection: string | null;
+  topicCategories: string[] | null;
+  recordingDate: string | null;
+  locationDescription: string | null;
+}
+
+// Discriminated union type
+export type VideoMetadata = OEmbedMetadata | DataApiMetadata;
+
+// Legacy alias for backward compatibility
+export type ScrapeResult = VideoMetadata;
 
 // ---------- Video ID Extraction ----------
 
@@ -124,12 +158,10 @@ export async function fetchVideoDetails(
   videoId: string,
   apiKey?: string
 ): Promise<YouTubeVideoDetails | null> {
-  const key = apiKey || getGoogleApiKey();
+  // Determine API key from parameter, database, or environment
+  const key = apiKey || getGoogleApiKey() || process.env.youtube_data_api;
   if (!key) {
-    const envKey = process.env.youtube_data_api;
-    if (!envKey) return null;
-    // Use env key if available
-    return fetchVideoDetails(videoId, envKey);
+    return null;
   }
 
   try {
@@ -174,9 +206,9 @@ export async function fetchVideoDetails(
       descriptionUrls: parseDescriptionUrls(description),
 
       // Statistics
-      viewCount: statistics.viewCount ? parseInt(statistics.viewCount) : null,
-      likeCount: statistics.likeCount ? parseInt(statistics.likeCount) : null,
-      commentCount: statistics.commentCount ? parseInt(statistics.commentCount) : null,
+      viewCount: statistics.viewCount ? parseInt(statistics.viewCount, 10) : null,
+      likeCount: statistics.likeCount ? parseInt(statistics.likeCount, 10) : null,
+      commentCount: statistics.commentCount ? parseInt(statistics.commentCount, 10) : null,
 
       // Status
       uploadStatus: status.uploadStatus || null,

@@ -2,17 +2,7 @@
 
 import { CheckCircle, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
-
-interface DependencyFile {
-  modelType: string;
-  displayName: string;
-  name: string;
-  size: string;
-  sizeBytes: number;
-  path: string;
-  exists: boolean;
-  emoji: string;
-}
+import { DependencyFile } from "@/types/workflow-dependencies";
 
 interface WorkflowDependencyCardProps {
   files: DependencyFile[];
@@ -59,8 +49,8 @@ export function WorkflowDependencyCard({ files }: WorkflowDependencyCardProps) {
                 key={idx}
                 className={`p-2 rounded border text-sm ${
                   file.exists
-                    ? "bg-green-50/50 border-green-200"
-                    : "bg-yellow-50/50 border-yellow-200"
+                    ? "bg-green-50/50 border-green-200 dark:bg-green-950/30 dark:border-green-800"
+                    : "bg-yellow-50/50 border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-800"
                 }`}
               >
                 <div className="flex items-start gap-2 mb-1">

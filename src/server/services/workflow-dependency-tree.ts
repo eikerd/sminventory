@@ -172,8 +172,9 @@ async function findModelFile(
           }
         }
       }
-    } catch {
-      // Continue to next directory
+    } catch (error) {
+      // Log filesystem errors but continue to next directory
+      console.error(`Error reading directory ${dirPath}:`, error);
     }
   }
 

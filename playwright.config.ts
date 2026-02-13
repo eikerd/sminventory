@@ -12,7 +12,7 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:6660',
     trace: 'on-first-retry',
-    screenshot: 'on', // Save screenshots for all tests
+    screenshot: process.env.CI ? 'on-first-retry' : 'on', // Full screenshots locally, selective in CI
     video: 'on-first-retry',
   },
   projects: [

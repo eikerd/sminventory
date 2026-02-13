@@ -1,17 +1,7 @@
 "use client";
 
 import { FileText, AlertCircle, CheckCircle } from "lucide-react";
-
-interface DependencyFile {
-  modelType: string;
-  displayName: string;
-  name: string;
-  size: string;
-  sizeBytes: number;
-  path: string;
-  exists: boolean;
-  emoji: string;
-}
+import { DependencyFile } from "@/types/workflow-dependencies";
 
 interface WorkflowDependencyListProps {
   files: DependencyFile[];
@@ -34,8 +24,8 @@ export function WorkflowDependencyList({ files }: WorkflowDependencyListProps) {
           key={idx}
           className={`flex items-center justify-between gap-3 p-3 rounded-lg border ${
             file.exists
-              ? "bg-green-50/50 border-green-200"
-              : "bg-yellow-50/50 border-yellow-200"
+              ? "bg-green-50/50 border-green-200 dark:bg-green-950/30 dark:border-green-800"
+              : "bg-yellow-50/50 border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-800"
           }`}
         >
           <div className="flex items-center gap-3 flex-1 min-w-0">

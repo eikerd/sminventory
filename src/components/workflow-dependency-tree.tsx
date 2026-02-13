@@ -26,17 +26,17 @@ interface DependencyFile {
 }
 
 // Tree node structure
-interface TreeNode {
+interface DependencyTreeNode {
   type: "folder" | "file";
   name: string;
   emoji: string;
   size?: string;
   status?: "✅" | "❌";
-  children?: TreeNode[];
+  children?: DependencyTreeNode[];
 }
 
-function buildTree(files: DependencyFile[]): TreeNode {
-  const root: TreeNode = {
+function buildTree(files: DependencyFile[]): DependencyTreeNode {
+  const root: DependencyTreeNode = {
     type: "folder",
     name: "Data/Models",
     emoji: "📦",
@@ -57,7 +57,7 @@ function buildTree(files: DependencyFile[]): TreeNode {
 
   // Build folder structure
   for (const [modelType, typeFiles] of Object.entries(grouped)) {
-    const folder: TreeNode = {
+    const folder: DependencyTreeNode = {
       type: "folder",
       name: modelType,
       emoji: typeFiles[0]?.emoji || "📦",
@@ -75,7 +75,7 @@ function buildTree(files: DependencyFile[]): TreeNode {
   return root;
 }
 
-function TreeNode({ node, depth = 0 }: { node: TreeNode; depth?: number }) {
+function TreeNode({ node, depth = 0 }: { node: DependencyTreeNode; depth?: number }) {
   const isFolder = node.type === "folder";
   const Icon = isFolder ? Folder : File;
 
@@ -141,8 +141,7 @@ export function WorkflowDependencyTree({ workflowId }: WorkflowDependencyTreePro
 
   const { summary, allFiles } = treeData;
   const statusColor = summary.ready ? "bg-green-50" : "bg-yellow-50";
-  const statusIcon = summary.ready ? CheckCircle : AlertCircle;
-  const StatusIcon = statusIcon;
+  const StatusIcon = summary.ready ? CheckCircle : AlertCircle;
 
   const tree = buildTree(allFiles);
 

@@ -218,6 +218,14 @@ export default function VideoDetailPage({
     reader.onload = async (event) => {
       const content = event.target?.result as string;
 
+      // Validate JSON before uploading
+      try {
+        JSON.parse(content);
+      } catch {
+        toast.error('Invalid JSON in workflow file');
+        return;
+      }
+
       try {
         // Upload workflow
         await uploadWorkflow.mutateAsync({
@@ -231,7 +239,8 @@ export default function VideoDetailPage({
           fileInputRef.current.value = '';
         }
       } catch (error) {
-        // Error already handled by mutation onError
+        // Error displayed by mutation onError callback
+        console.debug('Workflow upload failed:', error);
       }
     };
 
@@ -715,14 +724,10 @@ export default function VideoDetailPage({
                         <Button
                           variant="outline"
                           size="sm"
+                          disabled={true}
+                          title="Coming soon"
                           onClick={() => {
-                            // Rescan all workflows for this video
-                            linkedWorkflows.forEach((lw) => {
-                              if (lw.workflow?.filepath) {
-                                // TODO: Add rescan mutation
-                                toast.success(`Rescanning ${lw.workflow.name || 'workflow'}...`);
-                              }
-                            });
+                            toast.info('Rescan functionality coming soon');
                           }}
                         >
                           <RefreshCw className="mr-1 h-3 w-3" />
@@ -796,7 +801,7 @@ export default function VideoDetailPage({
                               </div>
                               <div className="flex items-center gap-1 flex-shrink-0">
                                 {/* Only show Details if workflow is installed (not in video_workflows dir) */}
-                                {workflow?.filepath && !workflow.filepath.includes('video_workflows') && (
+                                {workflow?.source !== 'video-uploaded' && (
                                   <Button
                                     variant="ghost"
                                     size="sm"
