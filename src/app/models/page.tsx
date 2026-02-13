@@ -423,7 +423,7 @@ function ModelsContent() {
                                 }
                                 identifyModel.mutate({ modelId: model.id });
                               }}
-                              disabled={identifyModel.isPending}
+                              disabled={identifyModel.isPending || hasApiKey.isLoading}
                               title="Lookup on CivitAI"
                             >
                               <Sparkles className="h-3 w-3" />

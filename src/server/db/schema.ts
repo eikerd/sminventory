@@ -40,6 +40,9 @@ export const models = sqliteTable("models", {
   index("idx_models_type").on(table.detectedType),
   index("idx_models_architecture").on(table.detectedArchitecture),
   index("idx_models_civitai").on(table.civitaiModelId),
+  index("idx_models_hash_status").on(table.hashStatus),
+  index("idx_models_filename").on(table.filename),
+  index("idx_models_civitai_name").on(table.civitaiName),
 ]);
 
 // ═══════════════════════════════════════════════════════════════════

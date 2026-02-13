@@ -118,7 +118,7 @@ export default function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium">CivitAI API Key</label>
+                  <label htmlFor="civitai-api-key" className="text-sm font-medium">CivitAI API Key</label>
                   {keyStatus?.civitai_api_key?.exists && (
                     <Badge variant="secondary" className="flex items-center gap-1 text-xs">
                       <CheckCircle className="h-3 w-3" />
@@ -129,6 +129,7 @@ export default function SettingsPage() {
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <Input
+                      id="civitai-api-key"
                       type={showCivitaiKey ? "text" : "password"}
                       placeholder={keyStatus?.civitai_api_key?.exists
                         ? keyStatus.civitai_api_key.maskedValue
@@ -166,7 +167,7 @@ export default function SettingsPage() {
 
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium">HuggingFace Token</label>
+                  <label htmlFor="huggingface-token" className="text-sm font-medium">HuggingFace Token</label>
                   {keyStatus?.huggingface_token?.exists && (
                     <Badge variant="secondary" className="flex items-center gap-1 text-xs">
                       <CheckCircle className="h-3 w-3" />
@@ -177,6 +178,7 @@ export default function SettingsPage() {
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <Input
+                      id="huggingface-token"
                       type={showHfKey ? "text" : "password"}
                       placeholder={keyStatus?.huggingface_token?.exists
                         ? keyStatus.huggingface_token.maskedValue
