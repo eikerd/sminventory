@@ -19,7 +19,7 @@ export const settingsRouter = router({
       key: z.enum(VALID_KEYS),
       value: z.string().min(1),
     }))
-    .mutation(({ input }) => {
+    .mutation(async ({ input }) => {
       const result = db.insert(settings)
         .values({
           key: input.key,
