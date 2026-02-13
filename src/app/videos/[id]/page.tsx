@@ -971,21 +971,30 @@ export default function VideoDetailPage({
                         </SelectItem>
                       </SelectContent>
                     </Select>
-                    <Select value={addTagValue} onValueChange={setAddTagValue}>
-                      <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Select tag..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {tagOptions.map((opt) => (
-                          <SelectItem key={opt} value={opt}>
-                            {opt}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {addTagCategory === VIDEO_TAG_CATEGORIES.CUSTOM ? (
+                      <Input
+                        className="flex-1"
+                        placeholder="Enter custom tag..."
+                        value={addTagValue}
+                        onChange={(e) => setAddTagValue(e.target.value)}
+                      />
+                    ) : (
+                      <Select value={addTagValue} onValueChange={setAddTagValue}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Select tag..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {tagOptions.map((opt) => (
+                            <SelectItem key={opt} value={opt}>
+                              {opt}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                     <Button
                       size="icon"
-                      disabled={!addTagValue || addTag.isPending}
+                      disabled={!addTagValue.trim() || addTag.isPending}
                       onClick={() => {
                         addTag.mutate({
                           videoId: id,
