@@ -6,6 +6,41 @@ import { db } from "@/server/db";
 import { workflowDependencies } from "@/server/db/schema";
 import { CONFIG } from "@/lib/config";
 import { eq } from "drizzle-orm";
+import { estimateModelVRAM, estimateWorkflowVRAM, type VRAMEstimate, type ModelDependency } from "./vram-estimator";
+
+// Typical sizes for models when not found on disk (used for VRAM estimation)
+const TYPICAL_MODEL_SIZES_BYTES: Record<string, number> = {
+  checkpoint: 6.5 * 1024 ** 3,      // ~6.5 GB (fp16 SDXL)
+  diffusion_model: 9.0 * 1024 ** 3, // ~9 GB (fp8 14B)
+  lora: 0.15 * 1024 ** 3,           // ~150 MB
+  vae: 0.33 * 1024 ** 3,            // ~330 MB
+  controlnet: 1.4 * 1024 ** 3,      // ~1.4 GB
+  clip: 4.9 * 1024 ** 3,            // ~4.9 GB (T5-XXL fp8)
+  clip_vision: 1.2 * 1024 ** 3,     // ~1.2 GB
+  text_encoder: 4.9 * 1024 ** 3,    // ~4.9 GB (T5-XXL fp8)
+  ipadapter: 1.6 * 1024 ** 3,       // ~1.6 GB
+  upscaler: 0.07 * 1024 ** 3,       // ~70 MB
+  embedding: 0.01 * 1024 ** 3,      // ~10 MB
+};
+
+/**
+ * Get a fallback size estimate for a missing model based on its type and filename hints
+ */
+export function estimateMissingModelSize(modelType: string, modelName: string): number {
+  let baseSize = TYPICAL_MODEL_SIZES_BYTES[modelType] || 2 * 1024 ** 3;
+
+  // Refine estimate from filename hints
+  const nameLower = modelName.toLowerCase();
+  if (nameLower.includes("fp8")) baseSize *= 0.55;
+  else if (nameLower.includes("fp16") || nameLower.includes("bf16")) baseSize *= 1.0;
+  else if (nameLower.includes("fp32")) baseSize *= 2.0;
+  else if (nameLower.includes("gguf")) baseSize *= 0.4;
+
+  if (nameLower.includes("14b")) baseSize = Math.max(baseSize, 8 * 1024 ** 3);
+  else if (nameLower.includes("xxl")) baseSize = Math.max(baseSize, 4.5 * 1024 ** 3);
+
+  return Math.round(baseSize);
+}
 
 interface TreeNode {
   name: string;
@@ -130,7 +165,7 @@ export async function getModelDirectories(modelType: string): Promise<string[]> 
 /**
  * Find a model file on disk
  */
-async function findModelFile(
+export async function findModelFile(
   modelType: string,
   modelName: string
 ): Promise<TreeNode | null> {
@@ -140,6 +175,7 @@ async function findModelFile(
   // Try each configured directory
   for (const dir of directories) {
     const fullPath = path.join(baseDir, dir, modelName);
+    const dirPath = path.join(baseDir, dir);
 
     try {
       if (existsSync(fullPath)) {
@@ -154,7 +190,6 @@ async function findModelFile(
       }
 
       // Try to search in directory
-      const dirPath = path.join(baseDir, dir);
       if (existsSync(dirPath)) {
         const entries = await fs.readdir(dirPath, { withFileTypes: true });
 
@@ -173,7 +208,6 @@ async function findModelFile(
         }
       }
     } catch (error) {
-      // Log filesystem errors but continue to next directory
       console.error(`Error reading directory ${dirPath}:`, error);
     }
   }
@@ -326,19 +360,42 @@ export async function getWorkflowDependencyTreeData(workflowId: string) {
     Object.entries(groups).flatMap(([modelType, nodes]) =>
       nodes.map(async (node) => {
         const { emoji, displayName } = await getModelTypeInfo(modelType);
+        // Use actual size if found, otherwise estimate from type/name
+        const effectiveSize = node.exists && node.sizeBytes > 0
+          ? node.sizeBytes
+          : estimateMissingModelSize(modelType, node.name);
+        const precision = node.name.toLowerCase().includes("fp8") ? "fp8"
+          : node.name.toLowerCase().includes("gguf") ? "gguf"
+          : "unknown";
+        const vramGB = estimateModelVRAM(modelType, precision, effectiveSize);
         return {
           modelType,
           displayName,
           name: node.name,
-          size: node.size,
-          sizeBytes: node.sizeBytes,
+          size: node.exists ? node.size : `~${formatFileSize(effectiveSize)}`,
+          sizeBytes: node.exists ? node.sizeBytes : effectiveSize,
+          sizeEstimated: !node.exists,
           path: node.path,
           exists: node.exists,
           emoji,
+          vramGB: Math.round(vramGB * 100) / 100,
         };
       })
     )
   );
+
+  // Build VRAM estimate from ALL files (using estimates for missing ones)
+  const modelDeps: ModelDependency[] = allFiles.map((f) => {
+    const precision = f.name.toLowerCase().includes("fp8") ? "fp8"
+      : f.name.toLowerCase().includes("gguf") ? "gguf"
+      : "unknown";
+    return {
+      type: f.modelType,
+      precision,
+      sizeBytes: f.sizeBytes,
+    };
+  });
+  const vramEstimate = estimateWorkflowVRAM(modelDeps);
 
   const summary = {
     totalFiles: allFiles.length,
@@ -353,5 +410,6 @@ export async function getWorkflowDependencyTreeData(workflowId: string) {
     groups,
     allFiles,
     summary,
+    vramEstimate,
   };
 }

@@ -28,6 +28,18 @@ import {
 import fs from "fs";
 import path from "path";
 import { parseWorkflowFile } from "@/server/services/workflow-parser";
+import {
+  findModelFile,
+  estimateMissingModelSize,
+  formatFileSize,
+  getModelDirectories,
+} from "@/server/services/workflow-dependency-tree";
+import {
+  estimateModelVRAM,
+  estimateWorkflowVRAM,
+  type ModelDependency,
+} from "@/server/services/vram-estimator";
+import type { ScanEvent } from "@/types/scan-events";
 
 // ---------- Helpers ----------
 
@@ -670,6 +682,327 @@ export const videosRouter = router({
         console.error("Upload workflow error:", error);
         throw error;
       }
+    }),
+
+  rescanWorkflows: publicProcedure
+    .input(z.object({ videoId: z.string() }))
+    .mutation(async ({ input }) => {
+      // Get all linked workflows for this video
+      const linked = db
+        .select()
+        .from(videoWorkflows)
+        .where(eq(videoWorkflows.videoId, input.videoId))
+        .all();
+
+      if (linked.length === 0) {
+        throw new Error("No workflows linked to this video");
+      }
+
+      let rescanned = 0;
+
+      for (const link of linked) {
+        const wf = db
+          .select()
+          .from(workflows)
+          .where(eq(workflows.id, link.workflowId))
+          .get();
+
+        if (!wf?.filepath) continue;
+
+        // Re-parse the workflow file
+        const parsed = await parseWorkflowFile(wf.filepath);
+        if (!parsed) continue;
+
+        const { dependencies: newDeps } = parsed;
+
+        // Delete old dependencies
+        db.delete(workflowDependencies)
+          .where(eq(workflowDependencies.workflowId, wf.id))
+          .run();
+
+        // Insert new dependencies with the EXISTING workflow ID
+        if (newDeps.length > 0) {
+          const depsWithCorrectId = newDeps.map((d) => ({
+            ...d,
+            workflowId: wf.id,
+          }));
+          db.insert(workflowDependencies).values(depsWithCorrectId).run();
+        }
+
+        // Update workflow record
+        db.update(workflows)
+          .set({
+            totalDependencies: newDeps.length,
+            missingCount: newDeps.length,
+            resolvedLocal: 0,
+            resolvedWarehouse: 0,
+            scannedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          })
+          .where(eq(workflows.id, wf.id))
+          .run();
+
+        rescanned++;
+      }
+
+      // Recalculate auto-tags
+      recalculateAutoTags(input.videoId);
+
+      return { rescanned };
+    }),
+
+  rescanWorkflowsVerbose: publicProcedure
+    .input(z.object({ videoId: z.string() }))
+    .mutation(async ({ input }) => {
+      const events: ScanEvent[] = [];
+      const ts = () => new Date().toISOString();
+
+      // Get all linked workflows for this video
+      const linked = db
+        .select()
+        .from(videoWorkflows)
+        .where(eq(videoWorkflows.videoId, input.videoId))
+        .all();
+
+      if (linked.length === 0) {
+        throw new Error("No workflows linked to this video");
+      }
+
+      events.push({
+        timestamp: ts(),
+        phase: "start",
+        action: `Starting rescan for ${linked.length} linked workflow(s)`,
+        result: "info",
+      });
+
+      let rescanned = 0;
+
+      for (const link of linked) {
+        const wf = db
+          .select()
+          .from(workflows)
+          .where(eq(workflows.id, link.workflowId))
+          .get();
+
+        if (!wf?.filepath) continue;
+
+        // ── Parse phase ──
+        events.push({
+          timestamp: ts(),
+          phase: "parse",
+          action: `Parsing workflow: ${wf.filename || path.basename(wf.filepath)}`,
+          result: "info",
+          details: wf.filepath,
+        });
+
+        const parsed = await parseWorkflowFile(wf.filepath);
+        if (!parsed) {
+          events.push({
+            timestamp: ts(),
+            phase: "parse",
+            action: `Failed to parse workflow: ${wf.filename || wf.filepath}`,
+            result: "warning",
+          });
+          continue;
+        }
+
+        const { dependencies: newDeps } = parsed;
+
+        // ── Extract phase ──
+        const nodeTypes = [...new Set(newDeps.map((d) => d.nodeType))];
+        events.push({
+          timestamp: ts(),
+          phase: "extract",
+          action: `Extracted ${newDeps.length} dependencies`,
+          result: "info",
+          details: `Node types: ${nodeTypes.join(", ")}`,
+        });
+
+        for (const dep of newDeps) {
+          events.push({
+            timestamp: ts(),
+            phase: "extract",
+            modelType: dep.modelType,
+            modelName: dep.modelName,
+            action: `Found dependency: ${dep.modelName} (${dep.modelType}) from ${dep.nodeType}`,
+            result: "info",
+          });
+        }
+
+        // ── Check phase: find each model on disk ──
+        const modelDeps: ModelDependency[] = [];
+
+        for (const dep of newDeps) {
+          const dirs = await getModelDirectories(dep.modelType);
+          events.push({
+            timestamp: ts(),
+            phase: "check",
+            modelType: dep.modelType,
+            modelName: dep.modelName,
+            action: `Checking disk: ${dep.modelName}`,
+            result: "info",
+            details: `Searching in: ${dirs.join(", ")}`,
+          });
+
+          const fileResult = await findModelFile(dep.modelType, dep.modelName);
+          const found = fileResult && fileResult.exists;
+
+          if (found && fileResult) {
+            events.push({
+              timestamp: ts(),
+              phase: "check",
+              modelType: dep.modelType,
+              modelName: dep.modelName,
+              action: `Local copy verified: ${dep.modelName}`,
+              result: "verified",
+              exists: true,
+              sizeBytes: fileResult.sizeBytes,
+              sizeFormatted: fileResult.size,
+              details: fileResult.path,
+            });
+
+            const precision = dep.modelName.toLowerCase().includes("fp8")
+              ? "fp8"
+              : dep.modelName.toLowerCase().includes("gguf")
+                ? "gguf"
+                : "unknown";
+            modelDeps.push({
+              type: dep.modelType,
+              precision,
+              sizeBytes: fileResult.sizeBytes,
+            });
+          } else {
+            const estimated = estimateMissingModelSize(dep.modelType, dep.modelName);
+            events.push({
+              timestamp: ts(),
+              phase: "check",
+              modelType: dep.modelType,
+              modelName: dep.modelName,
+              action: `Missing: ${dep.modelName}`,
+              result: "missing",
+              exists: false,
+              sizeBytes: estimated,
+              sizeFormatted: `~${formatFileSize(estimated)}`,
+              details: `Estimated from type=${dep.modelType} + filename hints`,
+            });
+
+            const precision = dep.modelName.toLowerCase().includes("fp8")
+              ? "fp8"
+              : dep.modelName.toLowerCase().includes("gguf")
+                ? "gguf"
+                : "unknown";
+            modelDeps.push({
+              type: dep.modelType,
+              precision,
+              sizeBytes: estimated,
+            });
+          }
+        }
+
+        // ── VRAM phase ──
+        for (const mdep of modelDeps) {
+          const vram = estimateModelVRAM(mdep.type, mdep.precision, mdep.sizeBytes);
+          events.push({
+            timestamp: ts(),
+            phase: "vram",
+            modelType: mdep.type,
+            action: `VRAM for ${mdep.type}: ${vram.toFixed(1)} GB (${mdep.precision})`,
+            result: "estimated",
+            vramGB: Math.round(vram * 100) / 100,
+          });
+        }
+
+        const vramEstimate = estimateWorkflowVRAM(modelDeps);
+        const breakdownStr = vramEstimate.breakdown
+          .map((b) => `${b.type}: ${b.vram} GB`)
+          .join(", ");
+        events.push({
+          timestamp: ts(),
+          phase: "vram",
+          action: `Peak VRAM estimate: ${vramEstimate.peakEstimate} GB`,
+          result: "estimated",
+          vramGB: vramEstimate.peakEstimate,
+          details: breakdownStr,
+        });
+
+        // ── DB update (resolve phase) ──
+        db.delete(workflowDependencies)
+          .where(eq(workflowDependencies.workflowId, wf.id))
+          .run();
+
+        if (newDeps.length > 0) {
+          const depsWithCorrectId = newDeps.map((d) => ({
+            ...d,
+            workflowId: wf.id,
+          }));
+          db.insert(workflowDependencies).values(depsWithCorrectId).run();
+        }
+
+        db.update(workflows)
+          .set({
+            totalDependencies: newDeps.length,
+            missingCount: newDeps.length,
+            resolvedLocal: 0,
+            resolvedWarehouse: 0,
+            scannedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          })
+          .where(eq(workflows.id, wf.id))
+          .run();
+
+        events.push({
+          timestamp: ts(),
+          phase: "resolve",
+          action: `Updated workflow record: ${newDeps.length} deps`,
+          result: "success",
+        });
+
+        rescanned++;
+      }
+
+      // ── Tags phase ──
+      recalculateAutoTags(input.videoId);
+
+      // Collect derived tags for display
+      const derivedTags = db
+        .select()
+        .from(videoTags)
+        .where(
+          and(
+            eq(videoTags.videoId, input.videoId),
+            eq(videoTags.source, TAG_SOURCE.AUTO)
+          )
+        )
+        .all()
+        .map((t) => t.value);
+
+      if (derivedTags.length > 0) {
+        events.push({
+          timestamp: ts(),
+          phase: "tags",
+          action: `Auto-tagged: [${derivedTags.join(", ")}]`,
+          result: "info",
+        });
+      }
+
+      // ── Complete ──
+      events.push({
+        timestamp: ts(),
+        phase: "complete",
+        action: `Rescan complete. ${rescanned} workflow(s) processed.`,
+        result: "success",
+      });
+
+      // Persist scan events to DB
+      db.update(videos)
+        .set({
+          lastScanEvents: JSON.stringify(events),
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(videos.id, input.videoId))
+        .run();
+
+      return { rescanned, events };
     }),
 
   removeWorkflow: publicProcedure

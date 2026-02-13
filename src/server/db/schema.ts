@@ -312,6 +312,7 @@ export const videos = sqliteTable("videos", {
 
   // App-specific
   cloudRenderUrl: text("cloud_render_url"),
+  lastScanEvents: text("last_scan_events"), // JSON array of ScanEvent[]
 
   // Timestamps
   createdAt: text("created_at").default("CURRENT_TIMESTAMP"),

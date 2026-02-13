@@ -16,15 +16,17 @@ import {
   Network,
   Table2,
   AlertTriangle,
+  Cpu,
 } from "lucide-react";
 import { DEP_STATUS } from "@/lib/config";
 import { formatBytes } from "@/lib/task-utils";
+import type { VRAMEstimate } from "@/server/services/vram-estimator";
 
 // Types
 type WorkflowDependency = {
   workflowId: string;
-  nodeId: string;
-  nodeType: string | null;
+  nodeId: number | null;
+  nodeType: string;
   modelType: string;
   modelName: string;
   resolvedModelId: string | null;
@@ -41,16 +43,17 @@ type WorkflowInfo = {
   name?: string | null;
   filename?: string | null;
   status?: string | null;
-  totalDependencies: number;
-  resolvedLocal: number;
-  resolvedWarehouse: number;
-  missingCount: number;
+  totalDependencies: number | null;
+  resolvedLocal: number | null;
+  resolvedWarehouse: number | null;
+  missingCount: number | null;
 };
 
 interface WorkflowDependencyViewerProps {
   workflow: WorkflowInfo;
   dependencies: WorkflowDependency[];
   compact?: boolean; // If true, use smaller height and condensed view
+  vramEstimate?: VRAMEstimate | null;
 }
 
 function getStatusIcon(status: string | null) {
@@ -87,6 +90,7 @@ export function WorkflowDependencyViewer({
   workflow,
   dependencies,
   compact = false,
+  vramEstimate,
 }: WorkflowDependencyViewerProps) {
   const [activeTab, setActiveTab] = useState("tree");
   const scrollHeight = compact ? "h-[300px]" : "h-[400px]";
@@ -113,6 +117,21 @@ export function WorkflowDependencyViewer({
   }
 
   return (
+    <div className="w-full space-y-2">
+      {vramEstimate && (
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="flex items-center gap-1.5 px-2 py-0.5">
+            <Cpu className="h-3 w-3" />
+            <span className="font-mono text-xs">~{vramEstimate.peakEstimate} GB VRAM</span>
+          </Badge>
+          {vramEstimate.warnings.length > 0 && (
+            <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3" />
+              {vramEstimate.warnings[0]}
+            </span>
+          )}
+        </div>
+      )}
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="tree" className="flex items-center gap-2">
@@ -263,5 +282,6 @@ export function WorkflowDependencyViewer({
         </div>
       </TabsContent>
     </Tabs>
+    </div>
   );
 }

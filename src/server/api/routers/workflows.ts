@@ -4,6 +4,7 @@ import { db } from "@/server/db";
 import { workflows, workflowDependencies, models } from "@/server/db/schema";
 import { eq, like, and, or } from "drizzle-orm";
 import { scanWorkflows, getWorkflowWithDependencies, parseWorkflowFile } from "@/server/services/workflow-parser";
+import { getWorkflowDependencyTreeData } from "@/server/services/workflow-dependency-tree";
 import { WORKFLOW_STATUS, DEP_STATUS } from "@/lib/config";
 
 export const workflowsRouter = router({
@@ -236,6 +237,13 @@ export const workflowsRouter = router({
 
     return results;
   }),
+
+  // Get dependency tree data with VRAM estimates
+  dependencyTreeData: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => {
+      return getWorkflowDependencyTreeData(input.id);
+    }),
 
   // Get workflow statistics
   stats: publicProcedure.query(() => {

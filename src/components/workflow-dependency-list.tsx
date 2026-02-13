@@ -5,9 +5,10 @@ import { DependencyFile } from "@/types/workflow-dependencies";
 
 interface WorkflowDependencyListProps {
   files: DependencyFile[];
+  highlightedModel?: string;
 }
 
-export function WorkflowDependencyList({ files }: WorkflowDependencyListProps) {
+export function WorkflowDependencyList({ files, highlightedModel }: WorkflowDependencyListProps) {
   if (files.length === 0) {
     return (
       <div className="flex items-center justify-center py-8 text-muted-foreground">
@@ -19,13 +20,18 @@ export function WorkflowDependencyList({ files }: WorkflowDependencyListProps) {
 
   return (
     <div className="space-y-2">
-      {files.map((file, idx) => (
+      {files.map((file, idx) => {
+        const isHighlighted = highlightedModel && file.name === highlightedModel;
+        return (
         <div
           key={idx}
-          className={`flex items-center justify-between gap-3 p-3 rounded-lg border ${
-            file.exists
-              ? "bg-green-50/50 border-green-200 dark:bg-green-950/30 dark:border-green-800"
-              : "bg-yellow-50/50 border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-800"
+          data-model-name={file.name}
+          className={`flex items-center justify-between gap-3 p-3 rounded-lg border transition-all duration-300 ${
+            isHighlighted
+              ? "ring-2 ring-green-400/60 shadow-[0_0_12px_rgba(74,222,128,0.15)] bg-green-950/30 border-green-700"
+              : file.exists
+                ? "bg-green-50/50 border-green-200 dark:bg-green-950/30 dark:border-green-800"
+                : "bg-yellow-50/50 border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-800"
           }`}
         >
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -52,7 +58,8 @@ export function WorkflowDependencyList({ files }: WorkflowDependencyListProps) {
             <p className="font-mono text-sm font-semibold">{file.size}</p>
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
