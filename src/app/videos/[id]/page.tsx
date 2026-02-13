@@ -428,6 +428,8 @@ export default function VideoDetailPage({
               type="button"
               onClick={() => setVideoExpanded(!videoExpanded)}
               className="w-full text-left"
+              aria-label={videoExpanded ? "Collapse video details" : "Expand video details"}
+              aria-expanded={videoExpanded}
             >
               <div className="flex items-center gap-3 px-4 py-3">
                 {/* Small thumbnail */}

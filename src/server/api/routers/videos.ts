@@ -415,8 +415,8 @@ export const videosRouter = router({
       const now = new Date().toISOString();
 
       // Insert video record with comprehensive metadata
-      // Use type narrowing for proper type safety
-      const videoData: any = {
+      // Build typed insert data using discriminated union narrowing
+      const videoData: typeof videos.$inferInsert = {
         id,
         url: input.url,
         // Basic metadata (common to both sources)
@@ -426,52 +426,29 @@ export const videosRouter = router({
         publishedAt: metadata.publishedAt,
         thumbnailUrl: metadata.thumbnailUrl,
         duration: metadata.duration,
+        // Data API fields - populated or null based on source
+        channelId: metadata.source === 'data_api' ? metadata.channelId : null,
+        viewCount: metadata.source === 'data_api' ? metadata.viewCount : null,
+        likeCount: metadata.source === 'data_api' ? metadata.likeCount : null,
+        commentCount: metadata.source === 'data_api' ? metadata.commentCount : null,
+        uploadStatus: metadata.source === 'data_api' ? metadata.uploadStatus : null,
+        privacyStatus: metadata.source === 'data_api' ? metadata.privacyStatus : null,
+        license: metadata.source === 'data_api' ? metadata.license : null,
+        embeddable: metadata.source === 'data_api' && metadata.embeddable !== null ? (metadata.embeddable ? 1 : 0) : null,
+        publicStatsViewable: metadata.source === 'data_api' && metadata.publicStatsViewable !== null ? (metadata.publicStatsViewable ? 1 : 0) : null,
+        madeForKids: metadata.source === 'data_api' && metadata.madeForKids !== null ? (metadata.madeForKids ? 1 : 0) : null,
+        dimension: metadata.source === 'data_api' ? metadata.dimension : null,
+        definition: metadata.source === 'data_api' ? metadata.definition : null,
+        caption: metadata.source === 'data_api' && metadata.caption !== null ? (metadata.caption ? 1 : 0) : null,
+        licensedContent: metadata.source === 'data_api' && metadata.licensedContent !== null ? (metadata.licensedContent ? 1 : 0) : null,
+        projection: metadata.source === 'data_api' ? metadata.projection : null,
+        topicCategories: metadata.source === 'data_api' && metadata.topicCategories ? JSON.stringify(metadata.topicCategories) : null,
+        recordingDate: metadata.source === 'data_api' ? metadata.recordingDate : null,
+        locationDescription: metadata.source === 'data_api' ? metadata.locationDescription : null,
         // Timestamps
         createdAt: now,
         updatedAt: now,
       };
-
-      // Add Data API-specific fields if source is data_api
-      if (metadata.source === 'data_api') {
-        videoData.channelId = metadata.channelId;
-        videoData.viewCount = metadata.viewCount;
-        videoData.likeCount = metadata.likeCount;
-        videoData.commentCount = metadata.commentCount;
-        videoData.uploadStatus = metadata.uploadStatus;
-        videoData.privacyStatus = metadata.privacyStatus;
-        videoData.license = metadata.license;
-        videoData.embeddable = metadata.embeddable !== null ? (metadata.embeddable ? 1 : 0) : null;
-        videoData.publicStatsViewable = metadata.publicStatsViewable !== null ? (metadata.publicStatsViewable ? 1 : 0) : null;
-        videoData.madeForKids = metadata.madeForKids !== null ? (metadata.madeForKids ? 1 : 0) : null;
-        videoData.dimension = metadata.dimension;
-        videoData.definition = metadata.definition;
-        videoData.caption = metadata.caption !== null ? (metadata.caption ? 1 : 0) : null;
-        videoData.licensedContent = metadata.licensedContent !== null ? (metadata.licensedContent ? 1 : 0) : null;
-        videoData.projection = metadata.projection;
-        videoData.topicCategories = metadata.topicCategories ? JSON.stringify(metadata.topicCategories) : null;
-        videoData.recordingDate = metadata.recordingDate;
-        videoData.locationDescription = metadata.locationDescription;
-      } else {
-        // oEmbed source - set Data API fields to null
-        videoData.channelId = null;
-        videoData.viewCount = null;
-        videoData.likeCount = null;
-        videoData.commentCount = null;
-        videoData.uploadStatus = null;
-        videoData.privacyStatus = null;
-        videoData.license = null;
-        videoData.embeddable = null;
-        videoData.publicStatsViewable = null;
-        videoData.madeForKids = null;
-        videoData.dimension = null;
-        videoData.definition = null;
-        videoData.caption = null;
-        videoData.licensedContent = null;
-        videoData.projection = null;
-        videoData.topicCategories = null;
-        videoData.recordingDate = null;
-        videoData.locationDescription = null;
-      }
 
       db.insert(videos).values(videoData).run();
 
@@ -1108,6 +1085,8 @@ export const videosRouter = router({
 
       const metadata = await scrapeVideoMetadata(video.url);
       const now = new Date().toISOString();
+      const isDataApi = metadata.source === 'data_api';
+      const api = isDataApi ? metadata : null;
 
       db.update(videos)
         .set({
@@ -1115,32 +1094,32 @@ export const videosRouter = router({
           title: metadata.title || video.title,
           description: metadata.description || video.description,
           channelName: metadata.channelName || video.channelName,
-          channelId: metadata.source === 'data_api' ? ((metadata as any).channelId || video.channelId) : video.channelId,
+          channelId: api ? (api.channelId || video.channelId) : video.channelId,
           publishedAt: metadata.publishedAt || video.publishedAt,
           thumbnailUrl: metadata.thumbnailUrl || video.thumbnailUrl,
           duration: metadata.duration || video.duration,
           // Statistics
-          viewCount: metadata.source === 'data_api' ? (metadata as any).viewCount : video.viewCount,
-          likeCount: metadata.source === 'data_api' ? (metadata as any).likeCount : video.likeCount,
-          commentCount: metadata.source === 'data_api' ? (metadata as any).commentCount : video.commentCount,
+          viewCount: api ? api.viewCount : video.viewCount,
+          likeCount: api ? api.likeCount : video.likeCount,
+          commentCount: api ? api.commentCount : video.commentCount,
           // Status
-          uploadStatus: metadata.source === 'data_api' ? (metadata as any).uploadStatus : video.uploadStatus,
-          privacyStatus: metadata.source === 'data_api' ? (metadata as any).privacyStatus : video.privacyStatus,
-          license: metadata.source === 'data_api' ? (metadata as any).license : video.license,
-          embeddable: metadata.source === 'data_api' ? ((metadata as any).embeddable ? 1 : 0) : video.embeddable,
-          publicStatsViewable: metadata.source === 'data_api' ? ((metadata as any).publicStatsViewable ? 1 : 0) : video.publicStatsViewable,
-          madeForKids: metadata.source === 'data_api' ? ((metadata as any).madeForKids ? 1 : 0) : video.madeForKids,
+          uploadStatus: api ? api.uploadStatus : video.uploadStatus,
+          privacyStatus: api ? api.privacyStatus : video.privacyStatus,
+          license: api ? api.license : video.license,
+          embeddable: api ? (api.embeddable ? 1 : 0) : video.embeddable,
+          publicStatsViewable: api ? (api.publicStatsViewable ? 1 : 0) : video.publicStatsViewable,
+          madeForKids: api ? (api.madeForKids ? 1 : 0) : video.madeForKids,
           // Content details
-          dimension: metadata.source === 'data_api' ? (metadata as any).dimension : video.dimension,
-          definition: metadata.source === 'data_api' ? (metadata as any).definition : video.definition,
-          caption: metadata.source === 'data_api' ? ((metadata as any).caption ? 1 : 0) : video.caption,
-          licensedContent: metadata.source === 'data_api' ? ((metadata as any).licensedContent ? 1 : 0) : video.licensedContent,
-          projection: metadata.source === 'data_api' ? (metadata as any).projection : video.projection,
+          dimension: api ? api.dimension : video.dimension,
+          definition: api ? api.definition : video.definition,
+          caption: api ? (api.caption ? 1 : 0) : video.caption,
+          licensedContent: api ? (api.licensedContent ? 1 : 0) : video.licensedContent,
+          projection: api ? api.projection : video.projection,
           // Topic details
-          topicCategories: metadata.source === 'data_api' ? JSON.stringify((metadata as any).topicCategories || []) : video.topicCategories,
+          topicCategories: api ? JSON.stringify(api.topicCategories || []) : video.topicCategories,
           // Recording details
-          recordingDate: metadata.source === 'data_api' ? (metadata as any).recordingDate : video.recordingDate,
-          locationDescription: metadata.source === 'data_api' ? (metadata as any).locationDescription : video.locationDescription,
+          recordingDate: api ? api.recordingDate : video.recordingDate,
+          locationDescription: api ? api.locationDescription : video.locationDescription,
           // Timestamp
           updatedAt: now,
         })

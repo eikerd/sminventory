@@ -1,15 +1,14 @@
 import { test, expect } from '@playwright/test';
-import path from 'path';
 import * as fs from 'fs';
 import * as path from 'path';
 
 // Screenshot helper for proof of testing
-const SCREENSHOT_DIR = path.join(process.cwd(), 'test-screenshots');
+const screenshotDir = path.join(process.cwd(), 'test-screenshots');
 
 async function captureProofScreenshot(page: any, name: string) {
-  const filename = path.join(SCREENSHOT_DIR, `${name}.png`);
+  const filename = path.join(screenshotDir, `${name}.png`);
   await page.screenshot({ path: filename, fullPage: true });
-  console.log(`📸 Proof screenshot saved: ${filename}`);
+  console.log(`Proof screenshot saved: ${filename}`);
 }
 
 test.describe.configure({ mode: 'serial' });
@@ -19,16 +18,16 @@ test.describe('Video Detail Page - Enhanced Workflow Features', () => {
 
   test.beforeAll(async ({ browser }) => {
     // Clean up old proof screenshots
-    if (fs.existsSync(SCREENSHOT_DIR)) {
-      const files = fs.readdirSync(SCREENSHOT_DIR);
+    if (fs.existsSync(screenshotDir)) {
+      const files = fs.readdirSync(screenshotDir);
       files.forEach(file => {
         if (file.endsWith('.png')) {
-          fs.unlinkSync(path.join(SCREENSHOT_DIR, file));
+          fs.unlinkSync(path.join(screenshotDir, file));
         }
       });
       console.log('🧹 Cleaned up old proof screenshots');
     } else {
-      fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
+      fs.mkdirSync(screenshotDir, { recursive: true });
       console.log('📁 Created test-screenshots folder');
     }
     // Create a shared test video that all tests will use
@@ -175,7 +174,7 @@ test.describe('Video Detail Page - Enhanced Workflow Features', () => {
     const fileChooser = await fileChooserPromise;
 
     // Upload the test workflow file
-    await fileChooser.setFiles(path.resolve(__dirname, '../../test-workflow.json'));
+    await fileChooser.setFiles(path.join(process.cwd(), 'test-workflow.json'));
 
     // Wait for upload to complete
     await page.waitForTimeout(3000);
@@ -392,7 +391,7 @@ test.describe('Workflow Parser Enhancement - Metadata Extraction', () => {
       const fileChooserPromise = page.waitForEvent('filechooser');
       await addButton.click();
       const fileChooser = await fileChooserPromise;
-      await fileChooser.setFiles(path.resolve(__dirname, '../../test-workflow.json'));
+      await fileChooser.setFiles(path.join(process.cwd(), 'test-workflow.json'));
       await page.waitForTimeout(3000);
 
       // Navigate to the workflow detail page to see full metadata
