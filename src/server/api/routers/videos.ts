@@ -574,90 +574,83 @@ export const videosRouter = router({
       })
     )
     .mutation(async ({ input }) => {
+      // Sanitize filename to prevent path traversal
+      const sanitizedFilename = path.basename(input.filename);
+      if (sanitizedFilename !== input.filename || sanitizedFilename.includes('..') || sanitizedFilename.includes('\0')) {
+        throw new Error("Invalid filename");
+      }
+
+      // Validate filename extension
+      if (!sanitizedFilename.endsWith('.json')) {
+        throw new Error("Only .json files are allowed");
+      }
+
+      // Validate JSON before writing to disk
       try {
-        // Sanitize filename to prevent path traversal
-        const sanitizedFilename = path.basename(input.filename);
-        if (sanitizedFilename !== input.filename || sanitizedFilename.includes('..') || sanitizedFilename.includes('\0')) {
-          throw new Error("Invalid filename");
+        JSON.parse(input.content);
+      } catch {
+        throw new Error("Invalid JSON file");
+      }
+
+      // Create video-specific workflow directory
+      const videoWorkflowDir = path.join(
+        CONFIG.paths.videoWorkflows,
+        input.videoId
+      );
+
+      await fs.promises.mkdir(videoWorkflowDir, { recursive: true });
+
+      // Save workflow file
+      const filepath = path.join(videoWorkflowDir, sanitizedFilename);
+      await fs.promises.writeFile(filepath, input.content, "utf8");
+
+      // Parse workflow file to get workflow and dependencies data
+      const parsed = await parseWorkflowFile(filepath);
+
+      if (!parsed) {
+        // Clean up orphaned file if parsing fails
+        await fs.promises.unlink(filepath).catch(() => {});
+        throw new Error("Failed to parse workflow file");
+      }
+
+      const { workflow, dependencies } = parsed;
+      const now = new Date().toISOString();
+
+      try {
+        // Insert workflow record with video-uploaded source
+        db.insert(workflows).values({
+          ...workflow,
+          source: "video-uploaded",
+          updatedAt: now,
+        }).run();
+
+        // Insert dependencies if any
+        if (dependencies.length > 0) {
+          db.insert(workflowDependencies).values(dependencies).run();
         }
 
-        // Validate filename extension
-        if (!sanitizedFilename.endsWith('.json')) {
-          throw new Error("Only .json files are allowed");
-        }
-
-        // Validate JSON
-        try {
-          JSON.parse(input.content);
-        } catch (e) {
-          console.error("Invalid JSON in uploaded workflow:", e);
-          throw new Error("Invalid JSON file");
-        }
-
-        // Create video-specific workflow directory
-        const videoWorkflowDir = path.join(
-          CONFIG.paths.videoWorkflows,
-          input.videoId
-        );
-
-        // Use async filesystem operations
-        await fs.promises.mkdir(videoWorkflowDir, { recursive: true });
-
-        // Save workflow file
-        const filepath = path.join(videoWorkflowDir, sanitizedFilename);
-        await fs.promises.writeFile(filepath, input.content, "utf8");
-
-        // Parse workflow file to get workflow and dependencies data
-        const parsed = await parseWorkflowFile(filepath);
-
-        if (!parsed) {
-          // Clean up orphaned file if parsing fails
-          await fs.promises.unlink(filepath).catch(() => {});
-          throw new Error("Failed to parse workflow file");
-        }
-
-        const { workflow, dependencies } = parsed;
-        const now = new Date().toISOString();
-
-        try {
-          // Insert workflow record with video-uploaded source
-          db.insert(workflows).values({
-            ...workflow,
-            source: "video-uploaded",
-            updatedAt: now,
-          }).run();
-
-          // Insert dependencies if any
-          if (dependencies.length > 0) {
-            db.insert(workflowDependencies).values(dependencies).run();
-          }
-
-          // Link workflow to video
-          db.insert(videoWorkflows)
-            .values({
-              videoId: input.videoId,
-              workflowId: workflow.id,
-              createdAt: now,
-            })
-            .run();
-
-          // Auto-tag from the uploaded workflow
-          deriveAutoTagsFromWorkflow(input.videoId, workflow.id);
-
-          return {
+        // Link workflow to video
+        db.insert(videoWorkflows)
+          .values({
+            videoId: input.videoId,
             workflowId: workflow.id,
-            filepath,
-            dependencyCount: dependencies.length,
-          };
-        } catch (dbError) {
-          console.error("Database error while saving uploaded workflow:", dbError);
-          // Clean up orphaned file if database operation fails
-          await fs.promises.unlink(filepath).catch(() => {});
-          throw new Error("Failed to save workflow to database");
-        }
-      } catch (error) {
-        console.error("Upload workflow error:", error);
-        throw error;
+            createdAt: now,
+          })
+          .run();
+
+        // Auto-tag from the uploaded workflow
+        deriveAutoTagsFromWorkflow(input.videoId, workflow.id);
+
+        return {
+          workflowId: workflow.id,
+          filepath,
+          dependencyCount: dependencies.length,
+        };
+      } catch (dbError) {
+        console.error("Database error while saving uploaded workflow:", dbError);
+        // Clean up orphaned file if database operation fails
+        await fs.promises.unlink(filepath).catch(() => {});
+        throw new Error("Failed to save workflow to database");
       }
     }),
 

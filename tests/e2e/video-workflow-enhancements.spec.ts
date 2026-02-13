@@ -60,11 +60,9 @@ test.describe('Video Detail Page - Enhanced Workflow Features', () => {
     await firstRow.waitFor({ state: 'visible' });
 
     // Extract video ID from table (assume URL pattern /videos/[id])
-    testVideoId = await firstRow.evaluate((row) => {
-      // Find the href or data attribute, or extract from onclick
-      const cells = Array.from(row.cells);
-      // For now, we'll just navigate and check the URL
-      return ''; // Will be filled by first test
+    testVideoId = await firstRow.evaluate(() => {
+      // Will be filled by first test navigation
+      return '';
     });
 
     await page.close();
@@ -136,7 +134,6 @@ test.describe('Video Detail Page - Enhanced Workflow Features', () => {
     ];
 
     for (const section of sections) {
-      const sectionCard = leftColumn.locator(`text=${section}`);
       // At least some sections should be visible
       const count = await leftColumn.locator('text=' + section).count();
       console.log(`Section "${section}" count:`, count);
