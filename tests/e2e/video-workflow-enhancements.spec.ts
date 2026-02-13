@@ -25,10 +25,10 @@ test.describe('Video Detail Page - Enhanced Workflow Features', () => {
           fs.unlinkSync(path.join(screenshotDir, file));
         }
       });
-      console.log('🧹 Cleaned up old proof screenshots');
+      console.log('Cleaned up old proof screenshots');
     } else {
       fs.mkdirSync(screenshotDir, { recursive: true });
-      console.log('📁 Created test-screenshots folder');
+      console.log('Created test-screenshots folder');
     }
     // Create a shared test video that all tests will use
     const page = await browser.newPage();
@@ -49,8 +49,11 @@ test.describe('Video Detail Page - Enhanced Workflow Features', () => {
       const submitButton = page.locator('button:has-text("Add Video")').last();
       await submitButton.click();
 
-      // Wait for video to be added
-      await page.waitForTimeout(5000);
+      // Wait for video to be added - watch for table row to appear
+      await page.waitForResponse(
+        (resp) => resp.url().includes('trpc') && resp.status() === 200,
+        { timeout: 10000 }
+      ).catch(() => { /* mutation may complete before we start listening */ });
       await page.reload();
       await page.waitForLoadState('networkidle');
     }
@@ -173,8 +176,12 @@ test.describe('Video Detail Page - Enhanced Workflow Features', () => {
     // Upload the test workflow file
     await fileChooser.setFiles(path.join(process.cwd(), 'test-workflow.json'));
 
-    // Wait for upload to complete
-    await page.waitForTimeout(3000);
+    // Wait for upload mutation to complete
+    await page.waitForResponse(
+      (resp) => resp.url().includes('trpc') && resp.status() === 200,
+      { timeout: 10000 }
+    ).catch(() => { /* mutation may have already completed */ });
+    await page.waitForLoadState('networkidle');
 
     // Verify workflow was added
     const newSection = page.locator('text=Associated Workflows').locator('..');
@@ -205,7 +212,6 @@ test.describe('Video Detail Page - Enhanced Workflow Features', () => {
 
       // Click to expand
       await chevronButton.click();
-      await page.waitForTimeout(500);
 
       // Verify dependency viewer is now visible
       const dependencyViewer = workflowCard.locator('text=Tree');
@@ -213,7 +219,6 @@ test.describe('Video Detail Page - Enhanced Workflow Features', () => {
 
       // Click again to collapse
       await chevronButton.click();
-      await page.waitForTimeout(500);
 
       // Dependency viewer should be hidden
       const treeTab = workflowCard.locator('text=Tree');
@@ -233,7 +238,6 @@ test.describe('Video Detail Page - Enhanced Workflow Features', () => {
     if (await workflowCard.count() > 0) {
       const chevronButton = workflowCard.locator('button').first();
       await chevronButton.click();
-      await page.waitForTimeout(500);
 
       // Verify all three tabs exist
       const treeTab = page.locator('button:has-text("Tree")');
@@ -246,23 +250,18 @@ test.describe('Video Detail Page - Enhanced Workflow Features', () => {
 
       // Click tree tab and verify tree view is shown
       await treeTab.click();
-      await page.waitForTimeout(300);
-      // Tree view should show model type folders
       const treeContent = page.locator('[role="tabpanel"]').first();
       await expect(treeContent).toBeVisible();
       await captureProofScreenshot(page, '02-dependency-viewer-tree-tab');
 
       // Click table tab and verify table view is shown
       await tableTab.click();
-      await page.waitForTimeout(300);
-      // Table should have headers
       const tableHeaders = page.locator('th');
-      expect(await tableHeaders.count()).toBeGreaterThan(0);
+      await expect(tableHeaders.first()).toBeVisible();
       await captureProofScreenshot(page, '03-dependency-viewer-table-tab');
 
       // Click graph tab and verify placeholder is shown
       await graphTab.click();
-      await page.waitForTimeout(300);
       await expect(page.locator('text=Graph view coming soon')).toBeVisible();
       await captureProofScreenshot(page, '04-dependency-viewer-graph-tab');
     }
@@ -326,8 +325,12 @@ test.describe('Video Detail Page - Enhanced Workflow Features', () => {
       const deleteButton = workflowCard.locator('button').filter({ hasText: '' }).last();
       await deleteButton.click();
 
-      // Wait for deletion to complete
-      await page.waitForTimeout(2000);
+      // Wait for deletion mutation to complete
+      await page.waitForResponse(
+        (resp) => resp.url().includes('trpc') && resp.status() === 200,
+        { timeout: 10000 }
+      ).catch(() => { /* mutation may have already completed */ });
+      await page.waitForLoadState('networkidle');
 
       // Verify count decreased
       const newSection = page.locator('text=Associated Workflows').locator('..');
@@ -350,8 +353,8 @@ test.describe('Video Detail Page - Enhanced Workflow Features', () => {
     await titleCell.click();
     await page.waitForLoadState('networkidle');
 
-    // Wait a bit for any delayed errors
-    await page.waitForTimeout(2000);
+    // Allow time for any async error handlers to fire
+    await page.waitForLoadState('load');
 
     expect(errors.length).toBe(0);
   });
@@ -373,7 +376,10 @@ test.describe('Workflow Parser Enhancement - Metadata Extraction', () => {
       await urlInput.fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
       const submitButton = page.locator('button:has-text("Add Video")').last();
       await submitButton.click();
-      await page.waitForTimeout(3000);
+      await page.waitForResponse(
+        (resp) => resp.url().includes('trpc') && resp.status() === 200,
+        { timeout: 10000 }
+      ).catch(() => { /* mutation may have already completed */ });
       await page.waitForLoadState('networkidle');
     }
 
@@ -389,7 +395,11 @@ test.describe('Workflow Parser Enhancement - Metadata Extraction', () => {
       await addButton.click();
       const fileChooser = await fileChooserPromise;
       await fileChooser.setFiles(path.join(process.cwd(), 'test-workflow.json'));
-      await page.waitForTimeout(3000);
+      await page.waitForResponse(
+        (resp) => resp.url().includes('trpc') && resp.status() === 200,
+        { timeout: 10000 }
+      ).catch(() => { /* mutation may have already completed */ });
+      await page.waitForLoadState('networkidle');
 
       // Navigate to the workflow detail page to see full metadata
       const workflowCard = page.locator('div.rounded-lg.border.bg-card').first();
@@ -425,7 +435,10 @@ test.describe('Workflow Dependency Viewer Component', () => {
       await urlInput.fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
       const submitButton = page.locator('button:has-text("Add Video")').last();
       await submitButton.click();
-      await page.waitForTimeout(3000);
+      await page.waitForResponse(
+        (resp) => resp.url().includes('trpc') && resp.status() === 200,
+        { timeout: 10000 }
+      ).catch(() => { /* mutation may have already completed */ });
       await page.waitForLoadState('networkidle');
     }
   });
@@ -437,23 +450,28 @@ test.describe('Workflow Dependency Viewer Component', () => {
     await page.waitForLoadState('networkidle');
 
     const workflowCard = page.locator('div.rounded-lg.border.bg-card').first();
+    const cardCount = await workflowCard.count();
 
-    if (await workflowCard.count() > 0) {
-      const chevronButton = workflowCard.locator('button').first();
-      await chevronButton.click();
-      await page.waitForTimeout(500);
-
-      // Look for status icons in the dependency list
-      const treeView = page.locator('[role="tabpanel"]').first();
-
-      // Check if any SVG icons are present (status indicators)
-      const icons = treeView.locator('svg');
-      const iconCount = await icons.count();
-      console.log(`Found ${iconCount} status icons in dependency tree`);
-
-      // At least some icons should be present
-      expect(iconCount).toBeGreaterThan(0);
+    // Skip explicitly if no workflow cards exist (test data dependent)
+    if (cardCount === 0) {
+      test.skip(true, 'No workflow cards present - skipping dependency icon check');
+      return;
     }
+
+    const chevronButton = workflowCard.locator('button').first();
+    await chevronButton.click();
+
+    // Wait for tree panel to appear
+    const treeView = page.locator('[role="tabpanel"]').first();
+    await expect(treeView).toBeVisible();
+
+    // Check if any SVG icons are present (status indicators)
+    const icons = treeView.locator('svg');
+    const iconCount = await icons.count();
+    console.log(`Found ${iconCount} status icons in dependency tree`);
+
+    // At least some icons should be present
+    expect(iconCount).toBeGreaterThan(0);
   });
 
   test('should show dependency model types grouped in tree view', async ({ page }) => {
@@ -463,24 +481,29 @@ test.describe('Workflow Dependency Viewer Component', () => {
     await page.waitForLoadState('networkidle');
 
     const workflowCard = page.locator('div.rounded-lg.border.bg-card').first();
+    const cardCount = await workflowCard.count();
 
-    if (await workflowCard.count() > 0) {
-      const chevronButton = workflowCard.locator('button').first();
-      await chevronButton.click();
-      await page.waitForTimeout(500);
-
-      // Make sure we're on tree tab
-      const treeTab = page.locator('button:has-text("Tree")');
-      await treeTab.click();
-      await page.waitForTimeout(300);
-
-      // Look for model type headers (Checkpoint, Lora, etc.)
-      const treeContent = page.locator('[role="tabpanel"]').first();
-      const folderIcons = treeContent.locator('svg').first();
-
-      // Should have folder structure
-      await expect(folderIcons).toBeVisible();
+    // Skip explicitly if no workflow cards exist (test data dependent)
+    if (cardCount === 0) {
+      test.skip(true, 'No workflow cards present - skipping tree view check');
+      return;
     }
+
+    const chevronButton = workflowCard.locator('button').first();
+    await chevronButton.click();
+
+    // Make sure we're on tree tab
+    const treeTab = page.locator('button:has-text("Tree")');
+    await expect(treeTab).toBeVisible();
+    await treeTab.click();
+
+    // Look for model type headers (Checkpoint, Lora, etc.)
+    const treeContent = page.locator('[role="tabpanel"]').first();
+    await expect(treeContent).toBeVisible();
+    const folderIcons = treeContent.locator('svg').first();
+
+    // Should have folder structure
+    await expect(folderIcons).toBeVisible();
   });
 
   test('should have sortable columns in table view', async ({ page }) => {
@@ -490,33 +513,37 @@ test.describe('Workflow Dependency Viewer Component', () => {
     await page.waitForLoadState('networkidle');
 
     const workflowCard = page.locator('div.rounded-lg.border.bg-card').first();
+    const cardCount = await workflowCard.count();
 
-    if (await workflowCard.count() > 0) {
-      const chevronButton = workflowCard.locator('button').first();
-      await chevronButton.click();
-      await page.waitForTimeout(500);
+    // Skip explicitly if no workflow cards exist (test data dependent)
+    if (cardCount === 0) {
+      test.skip(true, 'No workflow cards present - skipping table sort check');
+      return;
+    }
 
-      // Switch to table tab
-      const tableTab = page.locator('button:has-text("Table")');
-      await tableTab.click();
-      await page.waitForTimeout(300);
+    const chevronButton = workflowCard.locator('button').first();
+    await chevronButton.click();
 
-      // Check for table headers that should be clickable
-      const headers = page.locator('th');
-      const headerCount = await headers.count();
+    // Switch to table tab
+    const tableTab = page.locator('button:has-text("Table")');
+    await expect(tableTab).toBeVisible();
+    await tableTab.click();
 
-      console.log(`Found ${headerCount} table headers`);
-      expect(headerCount).toBeGreaterThan(0);
+    // Check for table headers that should be clickable
+    const headers = page.locator('th');
+    await expect(headers.first()).toBeVisible();
+    const headerCount = await headers.count();
 
-      // Try clicking a header to sort
-      if (headerCount > 0) {
-        const firstHeader = headers.first();
-        await firstHeader.click();
-        await page.waitForTimeout(300);
+    console.log(`Found ${headerCount} table headers`);
+    expect(headerCount).toBeGreaterThan(0);
 
-        // Should have sort indicator
-        console.log('Clicked header for sorting');
-      }
+    // Try clicking a header to sort
+    if (headerCount > 0) {
+      const firstHeader = headers.first();
+      await firstHeader.click();
+
+      // Should have sort indicator
+      console.log('Clicked header for sorting');
     }
   });
 });

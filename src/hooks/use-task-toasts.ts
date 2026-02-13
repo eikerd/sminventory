@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 
@@ -15,8 +15,8 @@ export function useTaskToasts() {
     }
   );
 
-  // data is the array directly, not an object with tasks property
-  const tasks = Array.isArray(data) ? data : [];
+  // Memoize tasks to avoid unnecessary effect re-runs
+  const tasks = useMemo(() => (Array.isArray(data) ? data : []), [data]);
 
   useEffect(() => {
     tasks.forEach((task) => {
@@ -27,7 +27,7 @@ export function useTaskToasts() {
       if (previousStatus !== task.status) {
         switch (task.status) {
           case "completed":
-            toast.success(`✅ ${task.name || task.id} completed`, {
+            toast.success(`${task.name || task.id} completed`, {
               id: toastId,
               description: task.description || "Task finished successfully",
               action: {
@@ -42,23 +42,16 @@ export function useTaskToasts() {
             break;
 
           case "failed":
-            toast.error(`❌ ${task.name || task.id} failed`, {
+            toast.error(`${task.name || task.id} failed`, {
               id: toastId,
               description: task.errorMessage || "An error occurred during task execution",
-              action: {
-                label: "Retry",
-                onClick: async () => {
-                  shownToastsRef.current.delete(toastId);
-                  toast.loading(`Retrying ${task.name}...`, { id: toastId });
-                },
-              },
               duration: 6000,
             });
             shownToastsRef.current.add(toastId);
             break;
 
           case "cancelled":
-            toast.info(`⏹️ ${task.name || task.id} cancelled`, {
+            toast.info(`${task.name || task.id} cancelled`, {
               id: toastId,
               description: "Task was cancelled",
               duration: 3000,
@@ -66,9 +59,9 @@ export function useTaskToasts() {
             break;
 
           case "paused":
-            toast.info(`⏸️ ${task.name || task.id} paused`, {
+            toast.info(`${task.name || task.id} paused`, {
               id: toastId,
-              description: "Task is paused. Click to resume.",
+              description: "Task is paused.",
               duration: 3000,
             });
             break;

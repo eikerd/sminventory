@@ -138,8 +138,10 @@ function extractSamplerSettings(workflow: ComfyUIWorkflow): {
   );
 
   if (samplerNode && samplerNode.widgets_values) {
-    // KSampler widget order: seed, control_after_generate, steps, cfg, sampler_name, scheduler, denoise
-    // KSamplerAdvanced widget order: add_noise, noise_seed, control_after_generate, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise
+    // ComfyUI widget_values indices are fixed by node definition and do not change.
+    // KSampler: [seed, control_after_generate, steps, cfg, sampler_name, scheduler, denoise]
+    // KSamplerAdvanced: [add_noise, noise_seed, control_after_generate, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise]
+    // eslint-disable-next-line @typescript-eslint/no-magic-numbers -- ComfyUI widget order is fixed by spec
     const values = samplerNode.widgets_values;
 
     if (samplerNode.type === "KSampler") {
@@ -267,20 +269,12 @@ function detectFeatures(workflow: ComfyUIWorkflow): {
       features.hasFaceDetailer = true;
     }
 
-    // ControlNet
-    if (node.type.includes("ControlNet")) {
-      features.hasControlNet = true;
-    }
-
-    // IP Adapter
-    if (node.type.includes("IPAdapter")) {
-      features.hasIPAdapter = true;
-    }
-
-    // LoRA
-    if (node.type.includes("Lora") || node.type.includes("LoRA")) {
-      features.hasLora = true;
-    }
+    // ComfyUI node types use consistent naming conventions (e.g. "ControlNetApply",
+    // "ControlNetLoader", "IPAdapterApply", "LoraLoader"). Substring matching is
+    // intentional to catch all variants from different custom node packs.
+    if (node.type.includes("ControlNet")) features.hasControlNet = true;
+    if (node.type.includes("IPAdapter")) features.hasIPAdapter = true;
+    if (node.type.includes("Lora") || node.type.includes("LoRA")) features.hasLora = true;
   }
 
   return features;
@@ -295,6 +289,9 @@ function calculateComplexity(workflow: ComfyUIWorkflow): {
 } {
   return {
     nodeCount: workflow.nodes.length,
+    // last_link_id is the highest link ID (auto-incremented). It approximates
+    // connection count; deleted links leave gaps but the value is sufficient
+    // for complexity scoring where precision isn't critical.
     connectionCount: workflow.last_link_id || 0,
   };
 }

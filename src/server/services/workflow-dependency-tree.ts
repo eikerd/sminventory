@@ -225,7 +225,8 @@ export async function findModelFile(
 }
 
 /**
- * Get workflow dependencies grouped by type
+ * Get workflow dependencies grouped by type.
+ * Async because findModelFile performs filesystem I/O.
  */
 export async function groupDependenciesByType(workflowId: string): Promise<DependencyGroup> {
   const deps = db
