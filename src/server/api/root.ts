@@ -6,6 +6,7 @@ import { tasksRouter } from "./routers/tasks";
 import { downloadsRouter } from "./routers/downloads";
 import { videosRouter } from "./routers/videos";
 import { settingsRouter } from "./routers/settings";
+import { executionsRouter } from "./routers/executions";
 
 /**
  * This is the primary router for your server.
@@ -18,6 +19,7 @@ export const appRouter = router({
   downloads: downloadsRouter,
   videos: videosRouter,
   settings: settingsRouter,
+  executions: executionsRouter,
 });
 
 // Export type definition of API

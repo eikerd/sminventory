@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
+import Link from "next/link";
 import { trpc } from "@/lib/trpc";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
@@ -265,10 +266,12 @@ function ModelsContent() {
                     {
                       header: "Filename",
                       accessor: (model) => (
-                        <div className="space-y-1">
-                          <p className="font-medium">{model.civitaiName || model.filename}</p>
-                          <p className="text-xs text-muted-foreground line-clamp-1">{model.filepath}</p>
-                        </div>
+                        <Link href={`/models/${model.id}`} className="block hover:text-primary transition-colors">
+                          <div className="space-y-1">
+                            <p className="font-medium">{model.civitaiName || model.filename}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-1">{model.filepath}</p>
+                          </div>
+                        </Link>
                       ),
                       sortKey: "filename",
                       sortable: true,
@@ -379,8 +382,9 @@ function ModelsContent() {
                 <ScrollArea className="h-[500px]">
                   <div className="space-y-2">
                     {models.map((model) => (
-                      <div
+                      <Link
                         key={model.id}
+                        href={`/models/${model.id}`}
                         className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -430,7 +434,7 @@ function ModelsContent() {
                             </Button>
                           )}
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </ScrollArea>
