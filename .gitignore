@@ -61,3 +61,16 @@ t3chat.txt
 
 # PM2
 .pm2/
+
+# --- added 2026-09-04: local runtime, agent state, and model artifacts ---
+.claude/
+.firecrawl/
+.playwright-cli/
+.playwright-mcp/
+.runtime/
+agent_files/
+data/
+*.safetensors
+*.gguf
+*.ckpt
+*.lnk

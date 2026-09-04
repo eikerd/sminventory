@@ -67,7 +67,7 @@ export function ScanConsole({ events, active }: ScanConsoleProps) {
   }, [events.length]);
 
   return (
-    <div data-testid="scan-console" className="rounded-lg border border-zinc-800 overflow-hidden bg-[#0a0a0a]">
+    <div data-testid="scan-console" className="rounded-lg border border-zinc-800 bg-[#0a0a0a]">
       {/* Title bar */}
       <div className="flex items-center justify-between px-3 py-1.5 bg-zinc-900 border-b border-zinc-800">
         <div className="flex items-center gap-2">
