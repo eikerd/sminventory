@@ -52,10 +52,12 @@ test.describe("Master Console Error Test - CRITICAL", () => {
           console.log(`  ${i + 1}. ${err.text}`);
           console.log(`     File: ${err.location}:${err.line}`);
         });
-        expect(errors).toHaveLength(
-          0,
+        // Playwright's toHaveLength takes only the expected length; the message
+        // belongs on expect() itself, unlike Jest.
+        expect(
+          errors,
           `Page ${pageUrl} has console errors that must be fixed`
-        );
+        ).toHaveLength(0);
       } else {
         console.log(`✅ ${pageUrl} - No console errors`);
       }

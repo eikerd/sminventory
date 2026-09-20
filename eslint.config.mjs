@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Reference material, not source: docs/error-code.js is a ~9,000-line minified
+    // bundle, and linting it produced dozens of rules-of-hooks errors about its
+    // mangled identifiers.
+    "docs/**",
   ]),
 ]);
 
