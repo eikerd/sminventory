@@ -43,6 +43,13 @@
       "when": 1770932574629,
       "tag": "0005_nebulous_rattler",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1771187975954,
+      "tag": "0006_chilly_gravity",
+      "breakpoints": true
     }
   ]
 }

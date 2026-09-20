@@ -21,6 +21,7 @@ import {
 import Link from "next/link";
 import { WORKFLOW_STATUS } from "@/lib/config";
 import { WorkflowDependencyTree } from "@/components/workflow-dependency-tree";
+import { WorkflowValidationStatus } from "@/components/workflow-validation-status";
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -166,7 +167,7 @@ export default function WorkflowDetailPage({ params }: { params: Promise<{ id: s
           )}
 
           {/* Stats Row */}
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium">Scan Status</CardTitle>
@@ -232,11 +233,14 @@ export default function WorkflowDetailPage({ params }: { params: Promise<{ id: s
                 </div>
               </CardContent>
             </Card>
+
+            {/* Path Validation Status */}
+            <WorkflowValidationStatus workflowId={id} />
           </div>
 
           {/* Dependencies View with VRAM Estimation */}
           <div className="min-h-[500px]">
-            <WorkflowDependencyTree workflowId={id} />
+            <WorkflowDependencyTree workflowId={id} workflowName={workflow.name || workflow.filename || ""} />
           </div>
         </main>
       </div>

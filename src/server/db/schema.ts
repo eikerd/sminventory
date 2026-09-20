@@ -138,6 +138,12 @@ export const workflowDependencies = sqliteTable("workflow_dependencies", {
   // Compatibility
   expectedArchitecture: text("expected_architecture"),
   compatibilityIssue: text("compatibility_issue"),
+
+  // Path validation tracking
+  lastValidatedPath: text("last_validated_path"), // Last path where we found this model
+  lastValidatedAt: text("last_validated_at"), // When we last checked
+  verifiedWorkingPath: text("verified_working_path"), // Path confirmed by successful execution
+  lastWorkedAt: text("last_worked_at"), // When this dependency last worked in an execution
 }, (table) => [
   index("idx_deps_workflow").on(table.workflowId),
   index("idx_deps_status").on(table.status),
@@ -166,6 +172,61 @@ export const workflowProfileStatus = sqliteTable("workflow_profile_status", {
   estimatedVramGb: real("estimated_vram_gb"),
   issues: text("issues"), // JSON array of issues
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// WORKFLOW EXECUTIONS (tracks each workflow run)
+// ═══════════════════════════════════════════════════════════════════
+export const workflowExecutions = sqliteTable("workflow_executions", {
+  id: text("id").primaryKey(),
+  workflowId: text("workflow_id").notNull().references(() => workflows.id, { onDelete: "cascade" }),
+
+  // Execution status: running, success, failed, cancelled
+  status: text("status").notNull().default("running"),
+
+  // Timing
+  startedAt: text("started_at").default("CURRENT_TIMESTAMP"),
+  completedAt: text("completed_at"),
+  durationMs: integer("duration_ms"),
+
+  // Results
+  errorMessage: text("error_message"),
+  executionLog: text("execution_log"), // JSON with detailed logs
+
+  // Environment
+  comfyuiVersion: text("comfyui_version"),
+  executionProfile: text("execution_profile"),
+
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
+}, (table) => [
+  index("idx_executions_workflow").on(table.workflowId),
+  index("idx_executions_status").on(table.status),
+  index("idx_executions_started").on(table.startedAt),
+]);
+
+// ═══════════════════════════════════════════════════════════════════
+// MODEL PATH HISTORY (tracks model paths over time)
+// ═══════════════════════════════════════════════════════════════════
+export const modelPathHistory = sqliteTable("model_path_history", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  modelId: text("model_id").notNull().references(() => models.id, { onDelete: "cascade" }),
+  workflowId: text("workflow_id").references(() => workflows.id, { onDelete: "cascade" }),
+  executionId: text("execution_id").references(() => workflowExecutions.id, { onDelete: "cascade" }),
+
+  // Path info
+  usedPath: text("used_path").notNull(),
+  pathType: text("path_type").notNull(), // 'validation', 'execution', 'scan'
+
+  // Result
+  success: integer("success").notNull(), // 1 = found/worked, 0 = not found/failed
+  notes: text("notes"),
+
+  timestamp: text("timestamp").default("CURRENT_TIMESTAMP"),
+}, (table) => [
+  index("idx_path_history_model").on(table.modelId),
+  index("idx_path_history_workflow").on(table.workflowId),
+  index("idx_path_history_execution").on(table.executionId),
+  index("idx_path_history_timestamp").on(table.timestamp),
+]);
 
 // ═══════════════════════════════════════════════════════════════════
 // TASKS (master task registry)
@@ -386,6 +447,10 @@ export type NewWorkflow = typeof workflows.$inferInsert;
 export type WorkflowDependency = typeof workflowDependencies.$inferSelect;
 export type NewWorkflowDependency = typeof workflowDependencies.$inferInsert;
 export type ExecutionProfile = typeof executionProfiles.$inferSelect;
+export type WorkflowExecution = typeof workflowExecutions.$inferSelect;
+export type NewWorkflowExecution = typeof workflowExecutions.$inferInsert;
+export type ModelPathHistory = typeof modelPathHistory.$inferSelect;
+export type NewModelPathHistory = typeof modelPathHistory.$inferInsert;
 export type Task = typeof tasks.$inferSelect;
 export type NewTask = typeof tasks.$inferInsert;
 export type TaskLog = typeof taskLogs.$inferSelect;

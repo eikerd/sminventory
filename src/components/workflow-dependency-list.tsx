@@ -1,6 +1,7 @@
 "use client";
 
 import { FileText, AlertCircle, CheckCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { DependencyFile } from "@/types/workflow-dependencies";
 
 interface WorkflowDependencyListProps {
@@ -26,7 +27,7 @@ export function WorkflowDependencyList({ files, highlightedModel }: WorkflowDepe
         <div
           key={idx}
           data-model-name={file.name}
-          className={`flex items-center justify-between gap-3 p-3 rounded-lg border transition-all duration-300 ${
+          className={`p-3 rounded-lg border transition-all duration-300 ${
             isHighlighted
               ? "ring-2 ring-green-400/60 shadow-[0_0_12px_rgba(74,222,128,0.15)] bg-green-950/30 border-green-700"
               : file.exists
@@ -34,7 +35,8 @@ export function WorkflowDependencyList({ files, highlightedModel }: WorkflowDepe
                 : "bg-yellow-50/50 border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-800"
           }`}
         >
-          <div className="flex items-center gap-3 flex-1 min-w-0">
+          {/* Top row: icon + emoji + filename ... status badge + size */}
+          <div className="flex items-center gap-3">
             <div className="flex-shrink-0">
               {file.exists ? (
                 <CheckCircle className="h-5 w-5 text-green-600" />
@@ -42,21 +44,24 @@ export function WorkflowDependencyList({ files, highlightedModel }: WorkflowDepe
                 <AlertCircle className="h-5 w-5 text-yellow-600" />
               )}
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-lg">{file.emoji}</span>
-                <p className="font-mono text-sm font-medium truncate">{file.name}</p>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {file.displayName}
-                {!file.exists && <span className="ml-2 font-medium text-yellow-700">Missing</span>}
-              </div>
+            <span className="text-lg flex-shrink-0">{file.emoji}</span>
+            <p className="font-mono text-sm font-medium truncate flex-1 min-w-0">{file.name}</p>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {!file.exists && (
+                <Badge variant="destructive" className="text-xs">Missing</Badge>
+              )}
+              {file.exists && (
+                <Badge variant="secondary" className="text-xs">Found</Badge>
+              )}
+              <span className="font-mono text-sm font-semibold">{file.size}</span>
             </div>
           </div>
-
-          <div className="flex-shrink-0 text-right">
-            <p className="font-mono text-sm font-semibold">{file.size}</p>
-          </div>
+          {/* Second row: file path */}
+          {file.path && (
+            <div className="mt-1 ml-[52px] text-xs text-muted-foreground font-mono truncate">
+              {file.path}
+            </div>
+          )}
         </div>
         );
       })}

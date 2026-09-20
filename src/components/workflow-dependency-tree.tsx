@@ -14,6 +14,7 @@ type ViewType = "tree" | "table" | "graph";
 
 interface WorkflowDependencyTreeProps {
   workflowId: string;
+  workflowName?: string;
   highlightedModel?: string;
 }
 
@@ -36,7 +37,7 @@ interface DependencyTreeNode {
   emoji: string;
   size?: string;
   vramGB?: number;
-  status?: "\u2705" | "\u274c";
+  status?: "\u2705";
   children?: DependencyTreeNode[];
 }
 
@@ -95,7 +96,7 @@ function buildTree(files: DependencyFile[]): DependencyTreeNode {
         emoji: "\ud83d\udcc4",
         size: file.size,
         vramGB: file.vramGB,
-        status: file.exists ? ("\u2705" as const) : ("\u274c" as const),
+        status: file.exists ? ("\u2705" as const) : undefined,
       })),
     };
     root.children?.push(folder);
@@ -135,7 +136,7 @@ function TreeNodeRow({ node, depth = 0, highlightedModel }: { node: DependencyTr
   );
 }
 
-export function WorkflowDependencyTree({ workflowId, highlightedModel }: WorkflowDependencyTreeProps) {
+export function WorkflowDependencyTree({ workflowId, workflowName, highlightedModel }: WorkflowDependencyTreeProps) {
   const [activeViews, setActiveViews] = useState<ViewType[]>(["tree", "table"]);
 
   // Fetch tree data
@@ -191,7 +192,9 @@ export function WorkflowDependencyTree({ workflowId, highlightedModel }: Workflo
           <div className="flex items-start gap-3 flex-1">
             <StatusIcon className={`h-5 w-5 mt-1 flex-shrink-0 ${summary.ready ? "text-green-600" : "text-yellow-600"}`} />
             <div className="flex-1">
-              <CardTitle>Workflow Dependencies</CardTitle>
+              <CardTitle className="truncate">
+                Workflow Dependencies{workflowName ? ` \u2014 ${workflowName}` : ""}
+              </CardTitle>
               <CardDescription>
                 {summary.ready
                   ? "All dependencies installed - workflow ready to run"
@@ -232,7 +235,7 @@ export function WorkflowDependencyTree({ workflowId, highlightedModel }: Workflo
                 ))}
                 <span className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-background/60 rounded px-2 py-0.5">
                   <span>overhead</span>
-                  <span className="font-mono">{(vramEstimate.peakEstimate - vramEstimate.baseVram).toFixed(1)} GB</span>
+                  <span className="font-mono">{(vramEstimate.withOverhead - vramEstimate.baseVram).toFixed(1)} GB</span>
                 </span>
               </div>
             )}
@@ -250,11 +253,9 @@ export function WorkflowDependencyTree({ workflowId, highlightedModel }: Workflo
             )}
           </div>
         )}
-      </CardHeader>
 
-      <CardContent className="pt-4 flex-1 flex flex-col min-h-0">
         {/* View Toggle Buttons */}
-        <div className="flex gap-2 mb-4 flex-shrink-0">
+        <div className="flex gap-2 mt-3">
           <Button
             variant={activeViews.includes("tree") ? "default" : "outline"}
             size="sm"
@@ -283,7 +284,9 @@ export function WorkflowDependencyTree({ workflowId, highlightedModel }: Workflo
             Graph View
           </Button>
         </div>
+      </CardHeader>
 
+      <CardContent className="pt-4 flex-1 flex flex-col min-h-0">
         {/* Split View Container */}
         <div className={`flex-1 flex gap-4 min-h-0 ${activeViews.length === 1 ? "flex-col" : "flex-row"}`}>
           {/* Tree View */}
