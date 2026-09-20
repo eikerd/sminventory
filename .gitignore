@@ -74,3 +74,6 @@ data/
 *.gguf
 *.ckpt
 *.lnk
+
+# Process logs from local runs
+*nohup*.log
